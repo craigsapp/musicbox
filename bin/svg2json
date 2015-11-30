@@ -1,0 +1,80 @@
+#!/usr/bin/perl
+#
+# Programmer:    Craig Stuart Sapp <craig.stanford.edu>
+# Creation Date: Thu Nov 19 11:15:12 PST 2015
+# Last Modified: Sun Nov 22 20:52:21 PST 2015
+# Filename:      musicbox/bin/score/svgscore2json
+# Syntax:        perl 5
+# vim:           ts=3
+#
+# Description:   Convert a list of SVG images for a score into a
+#                a JSON file with the SVG images base64 encoded
+#                and the initial XML header stripped out so that they
+#                can be placed directly on the page.  The filename bases
+#                are used as the image label in the generate JSON object.
+#
+
+use strict;
+use MIME::Base64;
+
+my @files = @ARGV;
+
+print "<script id=\"musicbox-svg\" type=\"application/json\">\n";
+print "{\n\n";
+my $i;
+for ($i=0; $i<@files; $i++) {
+	my $file = $files[$i];
+	next if $file !~ /\.svg$/i;
+	printEncodedImageEntry($file);
+	print "," if $i < $#files;
+	print "\n";
+}
+print "\n}\n";
+print "</script>\n";
+
+exit(0);
+
+
+
+##############################
+##
+## printEncodedImageEntry -- Remove the XML header from the image and then
+##    Base-64 encode the SVG image.  This function assumes that the
+##    This is the removed portion of the SVG image:
+##       <?xml version="1.0"?>
+##       <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+##          "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+##   This content is expected to be separated from the stating by the
+##   starting <svg> element by a newline.
+##
+
+sub printEncodedImageEntry {
+	my ($file) = @_;
+	return if $file !~ /\.svg$/;
+	my $base = $file;
+	$base =~ s/\.svg$//;
+	open (SFILE, $file) or die "Cannot read $file\n";
+	my @contents = <SFILE>;
+	close SFILE;
+	my $headerless = "";
+	my $found = 0;
+	for (my $i=0; $i<@contents; $i++) {
+		if ($contents[$i] =~ /<svg/) {
+			$found = 1;
+		}
+		next if !$found;
+		$headerless .= $contents[$i];
+	}
+	$headerless = encode_base64($headerless);
+	$headerless =~ s/\n//g;
+	print "\"$base\": \"";
+	# Not going to insert as an embedded image (due to security policies which
+	# may prevent the image from being loaded directly onto the page), but if so,
+	# then this needed to be printed before the content:
+	# print "data:image/svg+xml;base64,";
+	print $headerless;
+	print "\"";
+}
+
+
+
