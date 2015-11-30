@@ -15,10 +15,9 @@
 		href="{{ page.url | replace:'index.html','' | prepend: site.baseurl | prepend: site.url }}">
 
 	<!-- Custom CSS -->
-	<link rel="stylesheet" href="{{ "/css/main.css" | prepend: site.baseurl }}">
+	<link rel="stylesheet" href="{{ "/styles/main.css" | prepend: site.baseurl }}">
 
 	<!-- JavaScript -->
-	<script src="/javascripts/external-links.js"></script>
 	{% if page.javascript %}
 		{% for file in page.javascript %}
 			{% include {{file}} %}
