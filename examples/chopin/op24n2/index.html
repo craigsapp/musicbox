@@ -3,7 +3,8 @@
 <title>Chopin Mazurka 24/2</title>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
 <link rel="stylesheet" type="text/css" href="/styles/musicbox.css">
-<script src="scripts/musicbox.js"></script>
+<link rel="stylesheet" type="text/css" href="/styles/main.css">
+<script src="/scripts/musicbox.js"></script>
 <!-- vim: set ts=3 : -->
 </head>
 
@@ -12,12 +13,14 @@
 <script>
 	var musicbox;
 	document.addEventListener("DOMContentLoaded", function(event) {
-		musicbox = new MusicBox("musicbox.json");
+		musicbox = new MusicBox("musicbox-score.json", "musicbox-timemaps.json");
+		musicbox.setScrollAnimationTime(1500);
 	});
 </script>
 
 <center>
-	<h1 class="musicbox-title"></h1>
+	<h1 id="musicbox-work-title"></h1>
+	<h3 id="musicbox-recording-title"></h3>
 	<div id="musicbox-video-container"></div>
 	<div id="musicbox-score-container"></div>
 </center>
