@@ -1,0 +1,191 @@
+---
+layout: default
+title:		Options
+pagetitle:	MusicBox options
+xbreadcrumbs: [['/', 'home']]
+---
+
+The following table lists user-configurable options for the
+MusicBox interface.  These can be set in various ways, which are
+described after the list of options.
+
+<style>
+table.options {
+	padding-top: 40px;
+	padding-bottom: 40px;
+}
+table.options th { 
+	text-align: left;
+	font-style: italic;
+	font-weight: normal;
+	color: #b8b7a6;
+	font-size: 107%;
+}
+table.options tr:nth-child(even) {
+	background: #f5ede3;
+}
+table.options td:nth-child(1) {
+	font-weight: bold;
+}
+table.options td:nth-child(2) {
+	white-space: nowrap;
+}
+table.options td.quote:before,
+table.options td.quote:after {
+	content: "\"";
+}
+table.options td:nth-child(1) {
+	padding-left: 15px;
+	border-top-left-radius: 5px;
+	border-bottom-left-radius: 5px;
+}
+table.options td:nth-last-child(1) {
+	padding-right: 5px;
+	border-top-right-radius: 5px;
+	border-bottom-right-radius: 5px;
+}
+table.options td {
+	padding: 5px;
+}
+table.options tr {
+	padding: 0;
+	margin: 0;
+}
+table.options tt {
+	font-size: 92%;
+}
+</style>
+
+<table cellspacing=0 cellpadding=0 class="options">
+
+<tr><th>option name</th>
+	<th>default value</th>
+	<th>description</th>
+</tr>
+
+<tr><td>anticipationTime</td>
+	<td> -20</td>
+	<td>
+	The time-to-quarter-note alignment table is polled periodically
+	for event updated.  Typically this happens at about 40 Hz (every
+	25 milliseconds).  If a future event is very close to the 
+	current event, it may be better to include the future event
+	with the current events.  In addition, there may be a time
+	lag between detecting that an event occurs and when the 
+	notes are highlighted in a score.  Therefore this parameter gives an 
+	absolute time adjustment with respect the the current
+	media time.  For example <tt>-20</tt> means that any event occuring
+	up to 20 millseconds into the future will be activated now.
+	Also see the <a href="#pollFrequency">pollFrequency</a> option.
+	</td>
+</tr>
+
+<tr><td>idPostfix</td>
+	<td class="quote"></td>
+	<td>
+	This option is used to generate unique IDs when more than one
+	MusicBox interface is given on a webpage.  Each MusicBox on a
+	page must have a unique <tt>idPostfix</tt> option value so that
+	the MusicBoxes can work independently.  All selector options
+	which are IDs will have this tag appended to the ID.  For example,
+	<tt>#musicbox-score-container</tt> with 
+	<tt>idPostFix</tt>=<tt>-mvmt1</tt> will generate a final
+	ID of <tt>#musicbox-score-container-mvmt1</tt>.
+	</td>
+</tr>
+
+<tr><td>pollFrequency</td>
+	<td>20</td>
+	<td>
+	This is the repeat rate in milliseconds for the polling
+	function which monitors the current time in the video, and
+	then checks the timemap for any new events to process.  The
+	default value is 20 millseconds, although the common minimum
+	time for <tt>setInterval()</tt> is about 23 milliseconds.
+	Also see the <a href="#anticipationtime">anticipationtime</a>
+	option.
+	</td>
+</tr>
+
+<tr><td>scoreDataSelector</td>
+	<td class="quote">#musicbox-score-data</td>
+	<td>
+	When the score definition data is stored on the page, or
+	within a script loaded into the page, this is the ID of
+	the script element which stores the data for the score
+	definition.
+	</td>
+</tr>
+
+<tr><td>scoreSelector</td>
+	<td class="quote">#musicbox-score-container</td>
+	<td>
+	This is the selector ID for the div element 
+	on the page into which the score should be placed.
+	</td>
+</tr>
+
+<tr><td>scrollAnimationTime</td>
+	<td> 800</td>
+	<td>
+	This is the time to take when scrolling from one musical system
+	to another while playing the score.  The default time is 800 
+	milliseconds.
+	</td>
+</tr>
+
+<tr><td>timemapsDataSelector</td>
+	<td class="quote">#musicbox-timemaps-data</td>
+	<td>
+	When timemaps are embedded into the HTML page, or loaded
+	as scripts onto the page, this is the ID of the script in which
+	the timemap data is located.
+	</td>
+</tr>
+
+<tr><td>titleSelector</td>
+	<td class="quote">.musicbox-title</td>
+	<td>
+	If a webpage contains an element with the class name given
+	by this option, then any title found in the JSON score data
+	will be displayed within that element.
+	</td>
+</tr>
+
+<tr><td>systemViewCount</td>	
+	<td> 1</td>
+	<td>
+	In the default video display mode as well as the boxed
+	audio or plain score modes, this number indicates the number
+	of musical systems to display at one time.  The default value 
+	of <tt>1</tt> indicates that only one system will be displayed at
+	a time.  The height of the box will be set to the maximum 
+	system height times the number of systems to view.
+	</td>
+</tr>
+
+<tr><td>videoSelector</td>
+	<td class="quote">#musicbox-video-container</td>
+	<td>
+	This is the ID for the element into which a video element
+	should be inserted on the page.
+	</td>
+</tr>
+
+</table>
+
+
+<p> MusicBox options can be set in several ways:
+<ol>
+
+<li> by <tt>MusicBox.setOption()</tt>, such as:
+<tt>musicbox.setOption(pollFrequency, 50)</tt>,
+which would set the <tt>pollFrequency</tt> option
+to 50 milliseconds.
+
+</ol>
+
+
+
+
+

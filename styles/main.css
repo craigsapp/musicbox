@@ -14,7 +14,7 @@ td.pad3, th.pad3 { text-align: left; padding: 0 3em 0 0; }
 td.pad2, th.pad2 { text-align: left; padding: 0 2em 0 0; }
 td.pad1, th.pad1 { text-align: left; padding: 0 1em 0 0; }
 td.pad0, th.pad0 { text-align: left; padding: 0 0 0 0; }
-td.gray, th.gray { background: #f3f3f3; }
+td.gray, th.gray { background: #f3a3a3; }
 
 tr { vertical-align: baseline; }
 
@@ -34,7 +34,7 @@ body {
 	font-size: 16px;
 	line-height: 1.5;
 	font-weight: 300;
-	background-color: #fdfdfd;
+	background-color: #fffdfb;
 }
 
 h1 { font-size: 115%; color:#000000; font-weight: 900; margin-top: 24px; margin-bottom: 16px; }
@@ -44,7 +44,11 @@ h4 { font-size: 106%; color:#000000; font-weight: 600: margin-top: 12px; margin-
 h5 { font-size: 103%; color:#000000; font-weight: 500; margin-top: 8px;  margin-bottom:  8px; }
 h6 { font-size: 100%; color:#000000; font-weight: 400; margin-top: 6px;  margin-bottom:  6px; }
 
-.pagetitle { font-size: 120%; font-weight: 1000; }
+.pagetitle { 
+	font-size: 140%; 
+	font-weight: 1000; 
+	color: #a89786;
+}
 
 ol { margin-top: 16px; margin-bottom: 16px; margin-left: 48px; }
 
@@ -141,9 +145,9 @@ a:visited { color: #205caa; }
 	left:   0;
 	bottom: 0;
 	height: 50px;
-	background-color: #f3f3f3;
+	background-color: #f5f0e3;
 	width: 100%;
-	border-top: 1px solid #e8e8e8;
+	border-top: 1px solid #e5e0d3;
 	margin: 0 auto;
 	padding: 4px 10px 10px 10px;
 }
