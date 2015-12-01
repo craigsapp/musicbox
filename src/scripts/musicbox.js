@@ -2,11 +2,11 @@
 // Programmer:    Craig Stuart Sapp <craig@ccrma.stanford.edu>
 // Creation Date: Mon May  4 12:42:14 PDT 2015
 // Last Modified: Fri Nov 27 18:23:28 PST 2015 (objectified)
-// Last Modified: Mon Nov 30 17:36:34 PST 2015
+// Last Modified: Sun Nov 29 19:30:18 PST 2015
 // Syntax:        JavaScript 1.5
-// vim:           ts=3
 // Description:   MusicBox object which manages audio/video and
 //                score performance alignment management.
+// vim:           ts=3
 //
 // Notes:
 // HTML 5 audio/video element controls:
@@ -18,18 +18,7 @@
 
 'use strict';
 
-
-//////////////////////////////
-//
-// MusicBox -- constructor for the MusicBox object.  If a filename is passed
-//    to the constructor (which stores the score and timemap data in the
-//    JSON format), then that data will be automatically loaded and the
-//    score setup on the page.  Otherwise MusicBox.loadData(filename) or
-//    MusicBox.loadData() can be used to activate the object after it has
-//    been created.
-//
-
-function MusicBox(filename) {
+function MusicBox(filename, filename2) {
 
 	// fields filled with imported data (from page or file):
 	this.score     = null;  // system images and dimensions
@@ -39,13 +28,14 @@ function MusicBox(filename) {
 
 	this.states    = {      // current states for object
 		media:       null,   // currently active audio/video element
-		playing:     0,      // for exiting setInterval when stopped
-		refresh:     null,   // for exiting setInterval when stopped
+		playing:     0,      // used for exiting from setInterval when stopped
+		refresh:     null,   // used for exiting from setInterval when stopped
 		lasttime:    0,      // last time setInterval called
 		lastscroll:  null,   // last element scrolled to automatically
 		repeatstate: 0,      // used for selecting 1st, 2nd endings
-		anchorstart: 0,      // for starting from a particular point
-		anchorstop:  0,      // for starting from a particular point
+		anchorstart: 0,      // used for starting from a particular point
+		anchorstop:  0,      // used for starting from a particular point
+		tmindex:     null,   // index of current timemap
 
 		// fields derived from .timemaps:
 		timemap:     null,   // currently active timemap
@@ -55,8 +45,11 @@ function MusicBox(filename) {
 		audioType:   null    // currently active audio MIME type
 	};
 
-	if (filename) {
+	if (arguments.length == 1) {
+		// work on this case...
 		this.loadData(filename);
+	} else if (arguments.length == 2) {
+		this.loadData(filename, filename2);
 	}
 
 	return this;
@@ -147,59 +140,20 @@ MusicBox.prototype.setVideoFile = function () {
 //
 
 MusicBox.prototype.defaultOptions = {
-	// anticipationTime: time offset to add to event time for adjusting for
-	// any latency in the display system.
-	'anticipationTime': -20,
-
-	// idPostfix: element ID tag for unique IDs when multiple MusicBox instances
-	// on the page.
-	'idPostfix': '',
-
-	// videoSelector: the selector used to indicate that video should be
-	// inserted within the given element.
-	'videoSelector': '#musicbox-video-container',
-
-	// pollFrequency: the speed of setInterval repeat in ms.
-	'pollFrequency': 20,
-
-
-   // resizeToVideo: make the score resize when the video is resized.
-	'resizeToVideo': 'yes',
-
-	// scoredataSelector: selector for score definition data on the page.
-	'scoreDataSelector': '#musicbox-score-data',
-
-	// scoreSelector: selector for placing score on the page.
-	'scoreSelector': '#musicbox-score-container',
-
-	// scrollAnimationtime: speed of animation scroll time in ms.
-	'scrollAnimationTime': 800,
-
-	// systemsToShow: number of systems to show at any time.
-	'systemsToShow': 2,
-
-	// timemapsDataSelector: selector for location of timemaps of stored on page.
-	'timemapsDataSelector': '#musicbox-timemaps-data',
-
-	// titleSelector: selector for displaying a title
-	'titleSelector':           '.musicbox-title',
-
-	// viewSytem: system on page which is to be highlighted
-	'viewSystem': 1
+	'pollFrequency':         20,  // speed of setInterval repeat in ms
+	'scrollAnimationTime':  800,  // speed of system animation scroll time in ms
+	'anticipationTime':     -20,  // time to start playing before note in ms
+	'systemsToShow':          2,  // number of systems to show at any time
+	'viewSystem':              1,  // system on page which is highlighted
+	'timemapsDataSelector':  '#musicbox-timemaps-data',
+	'scoreDataSelector':     '#musicbox-score-data',
+	'mediaSelector':         '#musicbox-video-container',
+	'scoreSelector':         '#musicbox-score-container',
+	'workTitleSelector':     '#musicbox-work-title',
+	'movementTitleSelector': '#musicbox-movement-title',
+	'recordingTitleSelector':'#musicbox-recording-title'
 };
 
-
-
-//////////////////////////////
-//
-// MusicBox.prototype.getDefaultOptions -- Return the list of default 
-//    options for the object.  Mostly for reference but also it is
-//    possible to adjust default options in the returned object.
-//
-
-MusicBox.prototype.getDefaultOptions = function () {
-	return MusicBox.prototype.defaultOptions;
-}
 
 
 //////////////////////////////
@@ -223,6 +177,13 @@ MusicBox.prototype.getOption = function (name) {
 	return name in this.options ?  this.options[name] :
 		this.defaultOptions[name];
 };
+
+
+MusicBox.prototype.getSelectorOption = function (name) {
+	return name in this.options ?  this.options[name] :
+		this.defaultOptions[name];
+};
+
 
 
 
@@ -264,24 +225,6 @@ MusicBox.prototype.setOption = function (name) {
 
 //////////////////////////////
 //
-// MusicBox.prototype.getSelectorOption -- Return a selector
-//   options.  If the selector is an ID, then append the idPostfix
-//   option value to the selector.  The ID selector cannot
-//   contains class names or any other qualifiers at the moment.
-//
-
-MusicBox.prototype.getSelectorOption = function (name) {
-	var value = this.getOption(name);
-	if (value.match(/^#/)) {
-		value += this.getOption("idPostfix");
-	}
-	return value;
-}
-
-
-
-//////////////////////////////
-//
 // Accessor functions for official options --
 //
 
@@ -289,8 +232,8 @@ MusicBox.prototype.getAnticipationTime = function () {
 	return this.getOption("anticipationTime");
 }
 
-MusicBox.prototype.getVideoSelector = function () {
-	return this.getSelectorOption("videoSelector");
+MusicBox.prototype.getMediaSelector = function () {
+	return this.getOption("mediaSelector");
 }
 
 MusicBox.prototype.getPollFrequency = function () {
@@ -309,6 +252,15 @@ MusicBox.prototype.getScrollAnimationTime = function () {
 	return this.getOption("scrollAnimationTime");
 }
 
+MusicBox.prototype.setScrollAnimationTime = function (value) {
+	try {
+		value = parseInt(value);
+		this.options.scrollAnimationTime = value;
+	} catch (error) {
+		console.log("Error in setting scrollAnimationTime", value);
+	}
+}
+
 MusicBox.prototype.getSystemsToShow = function () {
 	return this.getOption("systemsToShow");
 }
@@ -317,15 +269,76 @@ MusicBox.prototype.getTimemapsDataSelector = function () {
 	return this.getSelectorOption("timemapsDataSelector");
 }
 
-MusicBox.prototype.getTitleSelector = function () {
-	return this.getSelectorOption("titleSelector");
+MusicBox.prototype.getWorkTitleSelector = function () {
+	return this.getSelectorOption("workTitleSelector");
+}
+
+MusicBox.prototype.getMovementTitleSelector = function () {
+	return this.getSelectorOption("movementTitleSelector");
+}
+
+MusicBox.prototype.getRecordingTitleSelector = function () {
+	return this.getSelectorOption("recordingTitleSelector");
+}
+
+
+///////////////////////////////////////////////////////////////////////////
+//
+// Data structure access
+//
+
+MusicBox.prototype.getWorkTitle = function () {
+	return "title" in this.score ? this.score.title : "";
+}
+
+MusicBox.prototype.getMovementTitle = function (index) {
+	return "";
+}
+
+
+MusicBox.prototype.getTimemapParameter = function (name, index) {
+	if (typeof index === 'undefined') {
+		index = this.states.tmindex;
+	} else if (index === null) {
+		index = this.states.tmindex;
+	}
+	if (!this.timemaps) {
+		return "";
+	}
+	if (!this.timemaps[index]) {
+		return "";
+	}
+	return name in this.timemaps[index] ? this.timemaps[index][name] : "";
+}
+
+
+MusicBox.prototype.getTimemapParameterScalar = function (name, index) {
+	var value = this.getTimemapParameter(name, index);
+	if (Array.isArray(value)) {
+		return value[0];
+	} else {
+		return value;
+	}
+}
+
+
+MusicBox.prototype.getRecordingTitle = function (index) {
+	return this.getTimemapParameterScalar("title", index);
+}
+
+MusicBox.prototype.getRecordingTitleUrl = function (index) {
+	return this.getTimemapParameterScalar("title-url", index);
+}
+
+MusicBox.prototype.getRecordingUrl = function (index) {
+	return this.getTimemapParameterScalar("url", index);
 }
 
 
 
 ///////////////////////////////////////////////////////////////////////////
 //
-// Score and timemap loading functions --
+// Score and timemap loading functions
 //
 
 //////////////////////////////
@@ -352,7 +365,7 @@ MusicBox.prototype.getTitleSelector = function () {
 //     [
 //     	{	// timemap 0
 //     	   "video",
-//     	   "timemap": {"measure", "moffset", "qstamp", "tstamp"}
+//     	   "timemap": {"m", "moffset", "qstamp", "tstamp"}
 //     	},	
 //     	...
 //     ]
@@ -362,23 +375,37 @@ MusicBox.prototype.getTitleSelector = function () {
 //     and a "timemaps" parameter containing the timemaps data.
 //
 
-MusicBox.prototype.loadData = function (filename) {
-	if (filename) {
-		this.loadDataFromFile(filename);
+MusicBox.prototype.loadData = function (scoreFile, timemapsFile) {
+
+	if (scoreFile) {
+		console.log("Going to get score from", scoreFile);
+		this.loadScoreFromFile(scoreFile);
 	} else {
-		this.loadDataFromPage();
+		// this.loadScoreFromPage();
 	}
+
+	var that = this;
+	setTimeout(function(){
+	if (timemapsFile) {
+		console.log("Going to get timemaps from", timemapsFile);
+		that.loadTimemapsFromFile(timemapsFile);
+	} else {
+		// this.loadTimemapsFromPage();
+	}
+	}, 1000);
+
 }
 
 
 
 //////////////////////////////
 //
-// MusicBox.prototype.loadDataFromFile -- Read .score and .timemaps
-//    data from a file on the server.
+// MusicBox.prototype.loadScoreFromFile -- Read .score data from 
+//     a file on the server.
 //
 
-MusicBox.prototype.loadDataFromFile = function (filename) {
+MusicBox.prototype.loadScoreFromFile = function (filename) {
+
 	var that = this;
 	var request = new XMLHttpRequest();
 	request.open('GET', filename);
@@ -392,16 +419,139 @@ MusicBox.prototype.loadDataFromFile = function (filename) {
 				if (!result.score) {
 					console.log("Error: no score defined in file");
 				} else {
-					that.score = result.score;
+					that.score = result;
+					console.log("Score loaded");
 				}
+			} catch (error) {
+				console.log('Error parsing score file:', error.message);
+			}
+		}
+	});
+	request.send();
+
+}
+
+
+
+//////////////////////////////
+//
+// MusicBox.prototype.loadTimemapsFromFile -- Read .timemaps
+//    data from a file on the server.
+//
+
+MusicBox.prototype.loadTimemapsFromFile = function (filename) {
+
+	var that = this;
+	var request = new XMLHttpRequest();
+	request.open('GET', filename);
+	request.addEventListener('error', function () {
+		console.error(this.statusText);
+	});
+	request.addEventListener('load', function(event) {
+		if (request.status == 200) {
+			try {
+				var result = JSON.parse(request.responseText);
 				if (!result.timemaps) {
 					console.log("Warning: no timemaps defined in file");
 				} else {
 					that.timemaps = result.timemaps;
-					that.setupScore();
+					that.loadTimemapFiles();
+					// that.setupScore();
 				}
 			} catch (error) {
 				console.log('Error parsing timemaps:', error.message);
+				// console.log('text:', request.responseText);
+			}
+		}
+	});
+	request.send();
+
+}
+
+
+
+///////////////////////////////
+//
+// MusicBox.prototype.loadTimemapFiles -- If a timemap entry does not have
+//    a .timemap property, then look for a file property and download
+//    its contents into the timemap.
+//
+
+MusicBox.prototype.loadTimemapFiles = function () {
+	console.log("GOT HERE IN LOADTIMEMAPFILES");
+	var tms = this.timemaps;
+	if (typeof tms === 'undefined') {
+		return;
+	}
+
+	var filled = true;
+	for (var i=0; i<tms.length; i++) {
+		if (!("timemap" in tms[i])) {
+			filled = false;
+			if ("file" in tms[i]) {
+console.log("LOADING ", i);
+				this.loadTimemapDataFile(i);
+			}
+		}
+	}
+	if (filled == true) {
+		this.setupScore();
+	}
+
+}
+
+
+
+
+//////////////////////////////
+//
+// MusicBox.prototype.loadTimemapDataFile --
+//
+
+MusicBox.prototype.loadTimemapDataFile = function (index) {
+	var tms = this.timemaps;
+	if (typeof tms === 'undefined') {
+		return;
+	}
+	var filename;
+	if ("file" in tms[index]) {
+		filename = tms[index].file;
+	}
+	if (!filename) {
+		returnl;
+	}
+
+	console.log("Going to load timemap", filename);
+	var that = this;
+	var request = new XMLHttpRequest();
+	request.open('GET', filename);
+	request.addEventListener('error', function () {
+		console.error(this.statusText);
+	});
+	request.addEventListener('load', function(event) {
+		if (request.status == 200) {
+			try {
+				var result = JSON.parse(request.responseText);
+				if (!result.timemap) {
+					console.log("Warning: no timemap defined in file");
+				} else {
+					console.log("Storing timemap from", filename);
+					that.timemaps[index] = result;
+					var filled = true;
+					for (var i=0; i<tms.length; i++) {
+						if (!("timemap" in tms[index])) {
+							filled = false;
+							if ("file" in tms[index]) {
+								this.loadTimemapDataFile(i);
+							}
+						}
+					}
+					if (filled == true) {
+						that.setupScore();
+					}
+				}
+			} catch (error) {
+				console.log('Error parsing timemap file:', error.message);
 				console.log('text:', request.responseText);
 			}
 		}
@@ -422,7 +572,7 @@ MusicBox.prototype.loadDataFromPage = function () {
 		this.loadTimemapData();
 	}
 	if (!this.score) {
-		this.loadScoreData();
+		this.loadData();
 	}
 	this.setupScore();
 }
@@ -463,7 +613,7 @@ MusicBox.prototype.initializeInterface = function () {
 	// set automatically now:
 	// box.style.height = musicbox.getMaxSystemHeight();
 	box.style.width = musicbox.getMaxSystemWidth() + 20;
-	this.addNoteControls();
+	that.addNoteControls();
 }
 
 
@@ -668,7 +818,7 @@ MusicBox.prototype.getHashTimeInfo = function (measure, beat, repeat) {
 	var locations = [];
 	var tm = this.getActiveTimemap();
 	for (i=0; i<tm.length-1; i++) {
-		if (tm[i].measure != measure) {
+		if (tm[i].m != measure) {
 			continue;
 		}
 		if (tm[i].moffset + 1 != beat) {
@@ -754,10 +904,41 @@ MusicBox.prototype.keydownEventHandler = function (event) {
 
 //////////////////////////////
 //
-// MusicBox.prototype.createMediaInterface --
+// MusicBox.prototype.createMediaInterface -- Either create or
+//    use an existing video or audio interface.  The order of checking
+//    for an inteface is:
+//
+//    (1) If a YouTube iframe is present on the page, link the
+//        score to that interface.
+//    (2) If timemaps.timemap[i].video.file is a YouTube URL,
+//        create an interface for it and then link the score to it.
+//    (3) Search for a <video> element on the page and link the 
+//        score to it.
+//    (4) If timemaps.timemap[i].video is defined and
+//        #musicbox-video-content exists, create a <video>
+//        element inside #musicbox-video-content, and supply it
+//			 with the video(s) provided by the timemap.
+//    (5) Search for an <audio> interface on the page and link the
+//        score to it.
+//    (6) If timemaps.timemap[i].audio is defined and 
+//        #musicbox-audio-content exists, then create an <audio>
+//        interface within it and link it to the score.
+//    (7) If timemaps.timemap[i].audio is defined and 
+//        #musicbox-audio-content does not exist, then create an <audio>
+//        interface and float it at the bottom of the page.
+//    (8) If not video or audio, display the score by itself without links.
 //
 
 MusicBox.prototype.createMediaInterface  = function (itype) {
+	// check for case #1
+	// check for case #2
+	// check for case #3
+	// check for case #4
+	// check for case #5
+	// check for case #6
+	// check for case #7
+	// check for case #8
+
 	if (itype == 'audio') {
 		this.createAudioInterface('audio');
 	} else if (itype == 'video') {
@@ -789,12 +970,12 @@ MusicBox.prototype.createAudioInterface = function (id) {
 	audio.style.right     = '0';
 	audio.style.width     = '100%';
 	audio.style.zIndex    = '1';
-	audio.addEventListener('play', function() {that.playMedia});
-	audio.addEventListener('pause', function() {that.stopMedia});
-	var text = '<source src="';
-	text += this.getAudioFile;
-	text += '" type="' + that.audioType + '"/>';
+	audio.addEventListener('play', function() {that.playMedia()});
+	audio.addEventListener('pause', function() {that.stopMedia()});
+	var text = '<source src="' + this.getAudioFile();
+	text += '" type="' + that.getAudioType() + '"/>';
 	audio.innerHTML = text;
+	this.setActiveMediaElement(audio);
 }
 
 
@@ -810,7 +991,7 @@ MusicBox.prototype.createAudioInterface = function (id) {
 
 MusicBox.prototype.createVideoInterface = function (id) {
 	var video = document.createElement('VIDEO');
-	var xmedia = document.querySelector(this.getVideoSelector());
+	var xmedia = document.querySelector(this.getMediaSelector());
 	if (xmedia) {
 		xmedia.innerHTML = '';
 		xmedia.appendChild(video);
@@ -838,10 +1019,6 @@ MusicBox.prototype.createVideoInterface = function (id) {
 	text += '" type="' + this.getVideoType() + '"/>';
 	video.innerHTML = text;
 	this.setActiveMediaElement(video);
-	var sc = document.querySelector(this.getScoreSelector());
-	if (sc) {
-		sc.className = "video";
-	}
 }
 
 
@@ -886,8 +1063,7 @@ MusicBox.prototype.playMedia = function (event) {
 
 MusicBox.prototype.stopMedia = function (event) {
 	this.states.playing = 0; // make timemap monitoring setInterval() exit
-	var tm = this.getActiveTimemap();
-	this.unhighlightRange(0, tm.length-1);
+	this.unhighlightRange();
 }
 
 
@@ -1053,7 +1229,7 @@ MusicBox.prototype.bringIntoView = function (element) {
 		$(sselect).animate({
 			scrollTop: $(zment).offset().top + $(sselect).scrollTop()
 					- $(sselect).offset().top
-		}, sselect);
+		}, this.getScrollAnimationTime());
 		this.states.lastscroll = zment;
 	}
 	return;
@@ -1275,10 +1451,11 @@ MusicBox.prototype.initializeDisplay = function () {
 	var maxwidth  = this.getMaxSystemWidth();
 	var maxheight = this.getMaxSystemHeight();
 
-	var title = document.querySelector(this.getTitleSelector());
+	var title = document.querySelector(this.getWorkTitleSelector());
 	if (title) {
-		title.innerHTML = this.score.title;
+		title.innerHTML = this.getWorkTitle();
 	}
+
 	var box = document.querySelector(this.getScoreSelector());
 
 	var boxtext = '<div class="musicbox-score"></div>';
@@ -1313,8 +1490,24 @@ MusicBox.prototype.initializeDisplay = function () {
 		}
 	}
 	box.style.height = maxheight * this.getSystemsToShow() + 'px';
-console.log(box);
 	this.setActiveTimemap();
+
+	var element = document.querySelector(this.getRecordingTitleSelector());
+	var rtitle = this.getRecordingTitle();
+	if (element && rtitle) {
+		var output = "";
+		var rurl = this.getRecordingTitleUrl();
+		if (rurl) {
+			output += '<a target="_new" href="';
+			output += rurl;
+			output += '">';
+		}
+		output += rtitle;
+		if (rurl) {
+			output += '</a>';
+		}
+		element.innerHTML = output;
+	}
 }
 
 
@@ -1339,6 +1532,12 @@ MusicBox.prototype.displayScore = function (num) {
 	content += '<table class="music">';
 	for (var i=0; i<Music[index].length; i++) {
 		sysid   = Music[index][i].id;
+		if (!sysid) {
+			sysid   = Music[index][i].base;
+		}
+		if (!sysid) {
+			sysid   = Music[index][i].sysid;
+		}
 		width   = Music[index][i].width;
 		height  = Music[index][i].height;
 		content += '<tr>'
@@ -1454,6 +1653,7 @@ MusicBox.prototype.selectTimemap = function (index) {
 	// check if the output is correct:
 	//console.log(nts);
 	this.states.timemap = nts;
+	this.states.tmindex = index;
 }
 
 
