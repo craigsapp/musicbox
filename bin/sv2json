@@ -1,0 +1,107 @@
+#!/usr/bin/perl
+#
+# Programmer:    Craig Stuart Sapp <craig.stanford.edu>
+# Creation Date: Tue Dec  1 00:24:21 PST 2015
+# Last Modified: Tue Dec  1 00:32:18 PST 2015
+# Filename:      musicbox/bin/sv2json
+# Syntax:        perl 5
+# vim:           ts=3
+#
+# Description:   Convert SV tap file to JSON timemap.
+#
+# Converts:
+#	0.938004535	1.1
+#	1.528004535	1.2
+#	1.908004535	1.3
+#	2.188004535	2.1
+#	2.468004535	2.2
+#	2.748004535	2.3
+#	3.028004535	3.1
+#	3.308004535	3.2
+#	3.614285714	3.3
+#	3.889795918	4.1
+#
+# Into:
+#	[
+#		{"m":1,	"moffset":0,	"qstamp":0,	"tstamp":0.938},
+#		{"m":1,	"moffset":1,	"qstamp":1,	"tstamp":1.528},
+#		{"m":1,	"moffset":2,	"qstamp":2,	"tstamp":1.908},
+#		{"m":2,	"moffset":0,	"qstamp":3,	"tstamp":2.188},
+#		{"m":2,	"moffset":1,	"qstamp":4,	"tstamp":2.468},
+#		{"m":2,	"moffset":2,	"qstamp":5,	"tstamp":2.748},
+#		{"m":3,	"moffset":0,	"qstamp":6,	"tstamp":3.028},
+#		{"m":3,	"moffset":1,	"qstamp":7,	"tstamp":3.308},
+#		{"m":3,	"moffset":2,	"qstamp":8,	"tstamp":3.614},
+#		etc.
+#
+
+
+use strict;
+use Getopt::Long;
+
+# $BEATDUR is the duration in quarter notes for a beat (or quarter note
+# duration of taps.
+my $BEATDUR = 1;
+Getopt::Long::Configure("bundling");
+GetOptions (
+   'b|beat=s' => \$BEATDUR
+);
+
+
+my @contents = <>;
+# my $cycle = getCycle(@contents);
+my $tcount = 0;
+
+my $output = "";
+$output .= "[\n";
+foreach my $line (@contents) {
+	$line =~ s/^\s+|\s+$//g;
+	next if $line !~ /^[\d.]/;
+	my @data = split(/\s+/, $line);
+	next if @data != 2;
+	next if $data[1] !~ /(\d+)\.(\d+)/;
+	my $measure = $1;
+	my $beat = $2;
+	my $tstamp = int($data[0] * 1000.0 + 0.5) / 1000.0;
+	$output .= "\t";
+	$output .= "{";
+	my $qstamp = $tcount++ * $BEATDUR;
+	my $moffset = $beat - 1.0;
+	$output .= "\"measure\":$measure,\t";
+	$output .= "\"moffset\":$moffset,\t";
+	$output .= "\"qstamp\":$qstamp,\t";
+	$output .= "\"tstamp\":$tstamp";
+	$output .= "},\n";
+}
+$output .= "]\n";
+$output = "$1$2" if $output =~ /(.*),([^,]*)/s;
+
+print $output;
+
+exit(0);
+
+
+
+##############################
+##
+## getCycle -- return the metric cycle
+##
+
+sub getCycle {
+	my @contents = @_;
+	my $maxbeat = 0;
+	foreach my $line (@contents) {
+		$line =~ s/^\s+|\s+$//g;
+		next if $line !~ /^[\d.]/;
+		my @data = split(/\s+/, $line);
+		next if @data != 2;
+		next if $data[1] !~ /(\d+)\.(\d+)/;
+		my $beat = $2;
+		$maxbeat = $beat if $maxbeat < $beat;
+	}
+	return $maxbeat;
+}
+
+
+
+
