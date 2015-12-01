@@ -1,0 +1,76 @@
+/* MusicBox CSS definitions */
+
+/*** General stylings ****************************************************/
+
+#musicbox-score-container {
+	overflow-y: scroll;
+	overflow-x: hidden;
+}
+
+#musicbox-score-container div {
+	margin-bottom: 40px;
+}
+
+#musicbox-score-container div:last-of-type {
+	margin-bottom: 0px;
+}
+
+#musicbox-score-container table {
+	width:838px;
+	padding:0;
+	margin:0;
+	border-spacing:0 !important;
+}
+
+.musicbox-score table tr { padding-left: 0; padding-right: 0; }
+.musicbox-score table tr { border-left:  0; border-right:  0; }
+.musicbox-score table td { padding-left: 0; padding-right: 0; }
+.musicbox-score table td { border-left:  0; border-right:  0; }
+.musicbox-score table td { text-align: right; }
+
+/* Notes (or any item having a class name starting with "noteon")
+ * will highlight in orange with the following styling.  The !important
+ * markers are needed to keep allowing highlighting after notes have
+ * been highlighted and highlithed after playing; otherwise, notes
+ * will stay back when trying to hover.
+ */
+
+g[class^='noteon']:hover { color: orange !important; stroke: orange !important; }
+
+
+/*** ANIMATIONS **********************************************************/
+
+/* Trill animation
+ *
+ * To animate an element, add the style:
+ *   element.style["animation"] = "trill .1s  5";
+ * Where "trill" is the text after keyframes below, .1s is the duration
+ * of the animation, and 5 is the number of times to repeat the
+ * animation. Total duration of the animation in this case is 0.1 * 5
+ * = 0.5 seconds.  When the animation is completed, you have to clear
+ * the animation style before trying to re-animate.
+ */
+
+@keyframes trill {
+	  0% { transform:translateY(0px); }
+	 50% { transform:translateY(160px); }
+	100% { transform:translateY(0px); }
+}
+@-webkit-keyframes trill {
+	  0% { -webkit-transform:translateY(0px); }
+	 50% { -webkit-transform:translateY(160px); }
+	100% { -webkit-transform:translateY(0px); }
+}
+@-moz-keyframes trill {
+	  0% { -moz-transform:translateY(0px); }
+	 50% { -moz-transform:translateY(160px); }
+	100% { -moz-transform:translateY(0px); }
+}
+@-ms-keyframes trill {
+	  0% { -ms-transform:translateY(0px); }
+	 50% { -ms-transform:translateY(160px); }
+	100% { -ms-transform:translateY(0px); }
+}
+
+
+
