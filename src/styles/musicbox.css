@@ -2,20 +2,20 @@
 
 /*** General stylings ****************************************************/
 
-#musicbox-score-container {
+#musicbox-score-container.video {
 	overflow-y: scroll;
 	overflow-x: hidden;
 }
 
-#musicbox-score-container div {
+#musicbox-score-container.video div {
 	margin-bottom: 40px;
 }
 
-#musicbox-score-container div:last-of-type {
+#musicbox-score-container.video div:last-of-type {
 	margin-bottom: 0px;
 }
 
-#musicbox-score-container table {
+#musicbox-score-container.video table {
 	width:838px;
 	padding:0;
 	margin:0;
@@ -32,10 +32,13 @@
  * will highlight in orange with the following styling.  The !important
  * markers are needed to keep allowing highlighting after notes have
  * been highlighted and highlithed after playing; otherwise, notes
- * will stay back when trying to hover.
+ * will stay black when trying to hover.
  */
 
-g[class^='noteon']:hover { color: orange !important; stroke: orange !important; }
+g[class^='noteon']:hover {
+	color: orange !important;
+	stroke: orange !important;
+}
 
 
 /*** ANIMATIONS **********************************************************/
