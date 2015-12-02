@@ -42,32 +42,64 @@ use Getopt::Long;
 # $BEATDUR is the duration in quarter notes for a beat (or quarter note
 # duration of taps.
 my $BEATDUR = 1;
+
+# $irregularQ is a boolean for -i option which indicates that the
+# entries in the tap file are not regularly spaced.
+my $irregularQ = 0;
+
+# $cycle is the number of beats in a measure (needed for the $irregular
+# option).
+my $cycle = 123456;
+
 Getopt::Long::Configure("bundling");
 GetOptions (
-   'b|beat=s' => \$BEATDUR
+   'b|beat=s' => \$BEATDUR,
+   'i|irregular' => \$irregularQ,
+   'c|cycle' => \$cycle
 );
 
-
 my @contents = <>;
-# my $cycle = getCycle(@contents);
+
+if ($cycle = 123456) {
+	$cycle = getCycle(@contents);
+}
+
 my $tcount = 0;
 
 my $output = "";
 $output .= "[\n";
+my $qstamp;        # the quarter-note timestamp in the score
+my $tstamp;        # the time-in-seconds timestamp in the recording
+my $omoffset;
+my $moffset = 0;
+my $diff;
+my $measure = 1;
+my $omeasure = 1;
 foreach my $line (@contents) {
 	$line =~ s/^\s+|\s+$//g;
 	next if $line !~ /^[\d.]/;
 	my @data = split(/\s+/, $line);
 	next if @data != 2;
-	next if $data[1] !~ /(\d+)\.(\d+)/;
-	my $measure = $1;
+	next if $data[1] !~ /(\d+)\.([\d.]+)/;
+	$omeasure = $measure;
+	$measure = $1;
 	my $beat = $2;
-	my $tstamp = int($data[0] * 1000.0 + 0.5) / 1000.0;
+	$tstamp = int($data[0] * 1000.0 + 0.5) / 1000.0;
 	$output .= "\t";
 	$output .= "{";
-	my $qstamp = $tcount++ * $BEATDUR;
-	my $moffset = $beat - 1.0;
-	$output .= "\"measure\":$measure,\t";
+	$omoffset = $moffset;
+	$moffset = $beat - 1.0;
+	if (!$irregularQ) {
+		$qstamp = $tcount++ * $BEATDUR;
+	} else {
+		if ($measure != $omeasure) {
+			$diff = $cycle * ($measure - $omeasure) + $moffset - $omoffset;
+		} else {
+			$diff = $moffset - $omoffset;
+		}
+		$qstamp = $qstamp + $diff;
+	}
+	$output .= "\"m\":$measure,\t";
 	$output .= "\"moffset\":$moffset,\t";
 	$output .= "\"qstamp\":$qstamp,\t";
 	$output .= "\"tstamp\":$tstamp";
