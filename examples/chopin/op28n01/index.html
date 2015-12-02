@@ -1,0 +1,30 @@
+<html>
+<head>
+<title>Chopin Prelude 28/1</title>
+<xscript src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></xscript>
+<link rel="stylesheet" type="text/css" href="/styles/musicbox.css">
+<link rel="stylesheet" type="text/css" href="/styles/main.css">
+<script src="/scripts/musicbox.js"></script>
+<!-- vim: set ts=3 : -->
+</head>
+
+<body>
+
+<script>
+	var musicbox;
+	document.addEventListener("DOMContentLoaded", function(event) {
+		musicbox = new MusicBox("musicbox-score.json", "musicbox-timemaps.json");
+		musicbox.setScrollAnimationTime(1500);
+	});
+</script>
+
+<center>
+	<h1 id="musicbox-work-title"></h1>
+	<h3 id="musicbox-recording-title"></h3>
+	<div id="musicbox-video-container"></div>
+	<div id="musicbox-score-container"></div>
+</center>
+	
+</body>
+</html>
+
