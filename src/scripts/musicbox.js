@@ -590,7 +590,10 @@ MusicBox.prototype.loadDataFromPage = function () {
 MusicBox.prototype.setupScore = function () {
 	this.initializeDisplay();
 	this.initializeInterface();
-	this.processHash();
+	var that = this;
+	setTimeout(function() {
+		that.processHash();
+	}, 2000);
 	if (!(document.getElementById('audio') ||
 		document.getElementById('video'))) {
 		this.createMediaInterface();
@@ -772,11 +775,13 @@ MusicBox.prototype.processHash = function () {
 		repeat = parseInt(matches[1]);
 	}
 
-	var hashtime = getHashTimeInfo(measure, beat, repeat);
+	var hashtime = this.getHashTimeInfo(measure, beat, repeat);
 	console.log("HASHSTARTTIME", hashtime);
 	this.states.anchorstart = hashtime.tstamp;
 	var iface = this.getActiveMediaElement();
+console.log("HASH TIME =", this.states.anchorstart);
 	iface.currentTime = this.states.anchorstart;
+console.log("GOT HERE");
 	iface.play();
 
 	if (!stop) {
@@ -810,7 +815,8 @@ MusicBox.prototype.processHash = function () {
 
 //////////////////////////////
 //
-// MusicBox.prototype.getHashTimeInfo --
+// MusicBox.prototype.getHashTimeInfo -- Need to add interpolation for hash
+//    times which are not in the timemap.
 //
 
 MusicBox.prototype.getHashTimeInfo = function (measure, beat, repeat) {
