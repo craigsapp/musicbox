@@ -2,7 +2,7 @@
 // Programmer:    Craig Stuart Sapp <craig@ccrma.stanford.edu>
 // Creation Date: Mon May  4 12:42:14 PDT 2015
 // Last Modified: Fri Nov 27 18:23:28 PST 2015 (objectified)
-// Last Modified: Sun Nov 29 19:30:18 PST 2015
+// Last Modified: Fri Aug 26 12:35:15 CEST 2016
 // Syntax:        JavaScript 1.5
 // Description:   MusicBox object which manages audio/video and
 //                score performance alignment management.
@@ -129,12 +129,12 @@ MusicBox.prototype.setScoreStyle = function (style) {
 // 	audio/video element
 //
 
-MusicBox.prototype.setActiveTimemap = function (index) {
+MusicBox.prototype.setActiveTimemap = function (index, selector) {
 	if (!index) {
 		index = 0;
 	}
 	var tm = this.getTimemap(index);
-	this.activateTimemap(index);
+	this.activateTimemap(index, selector);
 	var mediaorder = this.getMediaPreference();
 	for (var i=0; i<mediaorder.length; i++) {
 		if ((mediaorder[i] == 'youtube') && ('youtube' in tm)) {
@@ -457,7 +457,7 @@ MusicBox.prototype.getRecordingUrl = function (index) {
 //     	{	// timemap 0
 //     	   'video',
 //     	   'timemap': {'m', 'moffset', 'qstamp', 'tstamp'}
-//     	},	
+//     	},
 //     	...
 //     ]
 //
@@ -466,7 +466,18 @@ MusicBox.prototype.getRecordingUrl = function (index) {
 //     and a 'timemaps' parameter containing the timemaps data.
 //
 
-MusicBox.prototype.loadData = function (scoreFile, timemapsFile) {
+MusicBox.prototype.loadData = function () {
+	var scoreFile = "";
+	var timemapsFile = "";
+	if (arguments.length == 2) {
+		scoreFile    = arguments[0];
+		timemapsFile = arguments[1];
+	} else {
+		selector = arguments[0];
+		if (!selector) {
+			selector = this.getTimemapsDataSelector();
+		}
+	}
 	if (this.debug) {
 		console.log('MusicBox.prototype.loadData(', scoreFile, ', ', 
 				timemapsFile, ')');
@@ -474,13 +485,47 @@ MusicBox.prototype.loadData = function (scoreFile, timemapsFile) {
 	if (scoreFile) {
 		this.loadScoreFromFile(scoreFile);
 	} else {
-		// this.loadScoreFromPage();
+		this.loadScoreFromPage();
 	}
 	if (timemapsFile) {
 		this.loadTimemapsFromFile(timemapsFile);
 	} else {
-		// this.loadTimemapsFromPage();
+		this.loadTimemapsFromPage(selector);
 	}
+}
+
+
+
+//////////////////////////////
+//
+// MusicBox.prototype.loadTimemapsFromPage --
+//
+
+MusicBox.prototype.loadTimemapsFromPage = function (selector) {
+	if (!selector) {
+		selector = this.getTimemapsDataSelector();
+	}
+	var containers = document.querySelectorAll(selector);
+	if (containers.length == 0) {
+		console.log("Warning no timemaps found on page using selector", selector);
+		return;
+	}
+	if (!this.timemaps) {
+		this.timemaps = [];
+	}
+	var i, j;
+	for (i=0; i<containers.length; i++) {
+		var content = containers[i].textContent;
+		var item = JSON.parse(content);
+		if (item.constructor === Array) {
+			for (j=0; j<item.length; j++) {
+				this.timemaps.push(item[j]);
+			}
+		} else {
+			this.timemaps.push(item);
+		}
+	}
+	console.log(this.timemaps);
 }
 
 
@@ -743,9 +788,19 @@ MusicBox.prototype.setupScore = function () {
 		// score was already setup
 		return;
 	}
+	this.prepareScore();
+}
+
+
+//////////////////////////////
+//
+// MusicBox.prototype.prepareAlignment --
+//
+
+MusicBox.prototype.prepareAlignment = function (selector) {
 	this.setInitialized();
-	this.setActiveTimemap();
-  	this.createMediaInterface(this.getActiveMediaType());
+	this.setActiveTimemap(0, selector);
+	this.createMediaInterface(this.getActiveMediaType());
 	this.initializeDisplay();
 	this.initializeInterface();
 	this.processHash();
@@ -840,7 +895,12 @@ MusicBox.prototype.getMaxSystemHeight = function () {
 //
 
 MusicBox.prototype.getMaxSystemWidth = function () {
-	var movements = this.score.score;
+	var movements;
+	if (this.score) {
+		movements = this.score.score;
+	} else{
+		return 0;
+	}
 	if (!movements) {
 		return 0;
 	}
@@ -863,8 +923,10 @@ MusicBox.prototype.getMaxSystemWidth = function () {
 // MusicBox.prototype.loadTimemapData --
 //
 
-MusicBox.prototype.loadTimemapData = function () {
-	var selector = this.getTimemapsDataSelector();
+MusicBox.prototype.loadTimemapData = function (selector) {
+	if (!selector) {
+		selector = this.getTimemapsDataSelector();
+	}
 	var data = document.querySelector(selector);
 	if (!data) {
 		console.log('Cannot find timemaps, giving up');
@@ -934,9 +996,7 @@ MusicBox.prototype.processHash = function () {
 	console.log('HASHSTARTTIME', hashtime);
 	this.states.anchorstart = hashtime.tstamp;
 	var iface = this.getActiveMediaElement();
-console.log('HASH TIME =', this.states.anchorstart);
 	iface.currentTime = this.states.anchorstart;
-console.log('GOT HERE');
 	iface.play();
 
 	if (!stop) {
@@ -1269,6 +1329,7 @@ MusicBox.prototype.unhighlightRange = function (starti, endi) {
 			classinfo = classinfo.replace(/ ?\bon\b/, '');
 			offlist[j].setAttribute('class', classinfo);
 			offlist[j].style.color  = 'black';
+			offlist[j].style.fill   = 'black';
 			offlist[j].style.stroke = 'black';
 			if (offlist[j].style.animation) {
 				offlist[j].style['animation']         = '';
@@ -1306,6 +1367,7 @@ MusicBox.prototype.highlightRange = function (starti, endi) {
 			var classinfo = onlist[j].getAttribute('class');
 			onlist[j].setAttribute('class', classinfo + ' on');
 			onlist[j].style.color  = 'red';
+			onlist[j].style.fill   = 'red';
 			onlist[j].style.stroke = 'red';
 			if (onlist[j].classList.contains('trill')) {
 				this.createTrillAnimation(onlist[j], i);
@@ -1397,14 +1459,10 @@ MusicBox.prototype.bringIntoView = function (element) {
 	// 		'tr', $(zment).offset().top);
 
 	var sselect = this.getScoreSelector();
-console.log("SCORE SELECTOR", sselect);
 	if (zment && (this.states.lastscroll !== zment)) {
 		try {
 			var scrolltop = $(zment).offset().top + $(sselect).scrollTop() 
 				- $(sselect).offset().top;
-console.log('ANIMATE scrolltop =', scrolltop, "animate time:", 
-	this.getScrollAnimationTime());
-console.log("GOT HERE");
 			$(sselect).animate({ 
 					scrollTop: scrolltop},
 					this.getScrollAnimationTime(), "swing"
@@ -1635,6 +1693,10 @@ MusicBox.prototype.getTimeFromQuarterNote = function (stamp, offset) {
 //
 
 MusicBox.prototype.initializeDisplay = function () {
+	if (!this.score) {
+		// using a score that is already on the HTML page
+		return;
+	}
 	var music     = this.score.score;
 	var maxwidth  = this.getMaxSystemWidth();
 	var maxheight = this.getMaxSystemHeight();
@@ -1680,11 +1742,10 @@ MusicBox.prototype.initializeDisplay = function () {
 				}
 			}
 		}
-console.log('SDFASDFASDF');
 		box.style.height = maxheight * this.getSystemsToShow() + 'px';
-   	// setActiveTimemap has to occur before this function is called.
+	// setActiveTimemap has to occur before this function is called.
 		// this.setActiveTimemap();
-	
+
 		var element = document.querySelector(this.getRecordingTitleSelector());
 		var rtitle = this.getRecordingTitle();
 		if (element && rtitle) {
@@ -1704,8 +1765,8 @@ console.log('SDFASDFASDF');
 	}
 
 }
-	
-	
+
+
 
 /////////////////////////////
 //
@@ -1758,6 +1819,10 @@ MusicBox.prototype.displayScore = function (num) {
 //
 
 MusicBox.prototype.getSvgElementList = function () {
+	var svgs;
+	if (!this.score) {
+		this.score = [];
+	}
 	var svgs = this.score.svg;
 	var output = [];
 	for (var p in svgs) {
@@ -1777,8 +1842,14 @@ MusicBox.prototype.getSvgElementList = function () {
 //    elements in the score.
 //
 
-MusicBox.prototype.getQstamps = function () {
-	var svgs = this.getSvgElementList();
+MusicBox.prototype.getQstamps = function (selector) {
+	var svgs;
+	if (selector) {
+		svgs = [];
+		svgs.push(document.querySelector(selector + " svg"));
+	} else {
+		svgs = this.getSvgElementList();
+	}
 	var qstamps = {};
 	var i, j, k;
 	var tag;
@@ -1826,7 +1897,7 @@ MusicBox.prototype.getQstamps = function () {
 //     is called, since it needs to read qstamps from the score.
 //
 
-MusicBox.prototype.activateTimemap = function (index) {
+MusicBox.prototype.activateTimemap = function (index, selector) {
 	if (!index) {
 		index = 0;
 	}
@@ -1838,18 +1909,18 @@ MusicBox.prototype.activateTimemap = function (index) {
 	}
 
 	if (this.timemaps[index].video) {
-   	this.setVideoFile(this.timemaps[index].video);
+	this.setVideoFile(this.timemaps[index].video);
 	} else {
 		this.setVideoFile();
 	}
 	if (this.timemaps[index].audio) {
-   	this.setAudioFile(this.timemaps[index].audio);
+	this.setAudioFile(this.timemaps[index].audio);
 	} else {
 		this.setAudioFile();
 	}
 
 	var basemap = this.timemaps[index].timemap;
-	var qstamps = this.getQstamps();
+	var qstamps = this.getQstamps(selector);
 	qstamps = qstamps.sort(function(a,b){return a-b});
 
 	var nts = [];
@@ -1862,8 +1933,8 @@ MusicBox.prototype.activateTimemap = function (index) {
 	var interp;
 
 	// check if the inputs are correct:
-	// console.log('QTIMES', qstamps);
-	// console.log('TIMEMAP', basemap);
+	console.log('QTIMES', qstamps);
+	console.log('TIMEMAP', basemap);
 	for (i=0; i<qstamps.length; i++) {
 		if (qstamps[i] == basemap[curi].qstamp) {
 			nts.push(basemap[curi]);
