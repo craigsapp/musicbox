@@ -1597,14 +1597,11 @@ MusicBox.prototype.playFromEvent = function (event) {
 		} else {
 			matches = null;
 		}
-console.log("MATCHES", matches);
 		if (matches) {
 			var iface = this.getActiveMediaElement();
 			iface.pause();
 			var quarter = matches[1];
-console.log("QUARTER", quarter);
 			var timeval = this.getTimeFromQuarterNote(quarter, -0.050);
-console.log("TIMEVAL", timeval);
 			this.states.lasttime = timeval + this.getAnticipationTime() / 1000.0;
 			this.states.lastscroll = null;
 			iface.currentTime = timeval + this.getAnticipationTime() / 1000.0;
@@ -1630,7 +1627,6 @@ console.log("TIMEVAL", timeval);
 MusicBox.prototype.getTimeFromQuarterNote = function (stamp, offset) {
 	var tm = this.getActiveTimemap();
 	stamp = 1 * stamp.toString().replace(/d/, '.');
-console.log("STAMP", stamp);
 	var locations = [];
 	for (var i=0; i<tm.length; i++) {
 		if (tm[i].qstamp == stamp) {
@@ -1649,7 +1645,6 @@ console.log("STAMP", stamp);
 		return 0;
 	}
 
-console.log("GOT HERE AAA");
 	if (this.states.repeatstate == 1) {
 		this.states.repeatstate = 0; // reset repeat state after used
 		return locations[0];
@@ -1681,7 +1676,6 @@ console.log("GOT HERE AAA");
 		this.states.repeatstate = 0; // reset repeat state after used
 		return time1 < time2 ? locations[0] : locations[1];
 	}
-console.log("GOT HERE BBB");
 	if (locations.length > 0) {
 		this.states.repeatstate = 0; // reset repeat state after used
 		return locations[0];
