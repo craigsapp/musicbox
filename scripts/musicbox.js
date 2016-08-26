@@ -1601,7 +1601,7 @@ console.log("MATCHES", matches);
 		if (matches) {
 			var iface = this.getActiveMediaElement();
 			iface.pause();
-			var quarter = 1 * matches[1].replace(/d/g, ".");
+			var quarter = matches[1];
 console.log("QUARTER", quarter);
 			var timeval = this.getTimeFromQuarterNote(quarter, -0.050);
 console.log("TIMEVAL", timeval);
