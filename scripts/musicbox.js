@@ -1572,7 +1572,7 @@ MusicBox.prototype.addNoteControls = function () {
 				if (i==0) { console.log(notes[jj]); };
 			} else {
 				var number = notes[jj].className.baseVal.match(/noteon-([^\s]+)/)[1];
-				notes[jj].onclick = function(event) {that.playFromEvent(event);}
+				notes[jj].onclick = function(event) {console.log("EVENT", event); that.playFromEvent(event);}
 			}
 		}
 	}
