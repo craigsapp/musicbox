@@ -1601,7 +1601,7 @@ console.log("MATCHES", matches);
 		if (matches) {
 			var iface = this.getActiveMediaElement();
 			iface.pause();
-			var quarter = matches[1];
+			var quarter = parseInt(matches[1].replace(/d/g, "."));
 console.log("QUARTER", quarter);
 			var timeval = this.getTimeFromQuarterNote(quarter, -0.050);
 console.log("TIMEVAL", timeval);
@@ -1609,6 +1609,7 @@ console.log("TIMEVAL", timeval);
 			this.states.lastscroll = null;
 			iface.currentTime = timeval + this.getAnticipationTime() / 1000.0;
 			iface.play();
+			break;
 		}
 		targ = targ.parentNode;
 	}
