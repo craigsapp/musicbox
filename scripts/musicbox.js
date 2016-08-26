@@ -1629,8 +1629,8 @@ console.log("TIMEVAL", timeval);
 
 MusicBox.prototype.getTimeFromQuarterNote = function (stamp, offset) {
 	var tm = this.getActiveTimemap();
+	stamp = 1 * stamp.toString().replace(/d/, '.');
 console.log("STAMP", stamp);
-	stamp = stamp.toString().replace(/d/, '.');
 	var locations = [];
 	for (var i=0; i<tm.length; i++) {
 		if (tm[i].qstamp == stamp) {
@@ -1649,6 +1649,7 @@ console.log("STAMP", stamp);
 		return 0;
 	}
 
+console.log("GOT HERE AAA");
 	if (this.states.repeatstate == 1) {
 		this.states.repeatstate = 0; // reset repeat state after used
 		return locations[0];
@@ -1680,6 +1681,7 @@ console.log("STAMP", stamp);
 		this.states.repeatstate = 0; // reset repeat state after used
 		return time1 < time2 ? locations[0] : locations[1];
 	}
+console.log("GOT HERE BBB");
 	if (locations.length > 0) {
 		this.states.repeatstate = 0; // reset repeat state after used
 		return locations[0];
