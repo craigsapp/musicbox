@@ -28,6 +28,7 @@ function MusicBox(filename, filename2) {
 
 	this.states    = {      // current states for object
 		media:       null,   // currently active audio/video element
+		mediatype:   null,   // youtube, video or audio
 		playing:     0,      // used for exiting from setInterval when stopped
 		refresh:     null,   // used for exiting from setInterval when stopped
 		lasttime:    0,      // last time setInterval called
@@ -36,6 +37,11 @@ function MusicBox(filename, filename2) {
 		anchorstart: 0,      // used for starting from a particular point
 		anchorstop:  0,      // used for starting from a particular point
 		tmindex:     null,   // index of current timemap
+		theme:       null,   // for display style for score
+		scoreready:  false,  // for tracking if score is complete
+		timemapsready: false, // for tracking if timemaps is complete
+		initialized: false,  // for keeping track of if score on page
+		scorestyle:  'full', // for keeping track of score layout style on page.
 
 		// fields derived from .timemaps:
 		timemap:     null,   // currently active timemap
@@ -52,6 +58,8 @@ function MusicBox(filename, filename2) {
 		this.loadData(filename, filename2);
 	}
 
+	this.debug = 'true';   // for printing debugging statements
+
 	return this;
 };
 
@@ -61,6 +69,60 @@ function MusicBox(filename, filename2) {
 // MusicBox.states accessor functions
 //
 
+
+MusicBox.prototype.getTimemap = function (index) {
+	if (!('timemaps' in this)) {
+		return null;
+	}
+	return this.timemaps[index];
+}
+
+MusicBox.prototype.setActiveMediaType = function (aType) {
+	this.states.mediatype = aType;
+}
+
+MusicBox.prototype.setScoreReady = function () {
+	this.states.scoreready = true;
+}
+
+MusicBox.prototype.getScoreReady = function () {
+	return this.states.scoreready;
+}
+
+MusicBox.prototype.setTimemapsReady = function () {
+	this.states.mapsready = true;
+}
+
+MusicBox.prototype.getTimemapsReady = function () {
+	return this.states.mapsready;
+}
+
+MusicBox.prototype.getInitialized = function () {
+	return this.states.initialized;
+}
+
+MusicBox.prototype.setInitialized = function () {
+	this.states.initialized = true;
+}
+
+MusicBox.prototype.getScoreStyle = function () {
+	return this.states.scorestyle;
+}
+
+MusicBox.prototype.setScoreStyle = function (style) {
+	if (style == 'full') {
+		var selector = this.getScoreSelector()
+		var element = document.querySelector(selector);
+		element.style['overflow-y'] = '';
+		element.style['overflow-x'] = '';
+		element.style.overflow = '';
+	}
+
+	this.states.scorestyle = style;
+}
+
+
+
 //////////////////////////////
 //
 // MusicBox.prototype.setActiveMediaElement -- Store the current 
@@ -68,11 +130,32 @@ function MusicBox(filename, filename2) {
 //
 
 MusicBox.prototype.setActiveTimemap = function (index) {
-	this.selectTimemap(index);
+	if (!index) {
+		index = 0;
+	}
+	var tm = this.getTimemap(index);
+	this.activateTimemap(index);
+	var mediaorder = this.getMediaPreference();
+	for (var i=0; i<mediaorder.length; i++) {
+		if ((mediaorder[i] == 'youtube') && ('youtube' in tm)) {
+			this.setActiveMediaType('youtube');
+			break;
+		} else if ((mediaorder[i] == 'video') && ('video' in tm)) {
+			this.setActiveMediaType('video');
+			break;
+		} else if ((mediaorder[i] == 'audio') && ('audio' in tm)) {
+			this.setActiveMediaType('audio');
+			break;
+		}
+	}
 }
 
 MusicBox.prototype.getActiveTimemap = function () {
 	return this.states.timemap;
+}
+
+MusicBox.prototype.getActiveMediaType = function () {
+	return this.states.mediatype;
 }
 
 MusicBox.prototype.setActiveMediaElement = function (element) {
@@ -144,7 +227,10 @@ MusicBox.prototype.defaultOptions = {
 	'scrollAnimationTime':  800,  // speed of system animation scroll time in ms
 	'anticipationTime':     -20,  // time to start playing before note in ms
 	'systemsToShow':          2,  // number of systems to show at any time
-	'viewSystem':              1,  // system on page which is highlighted
+	'viewSystem':             1,  // system on page which is highlighted
+	'audioStyle':				'full',
+	'videoStyle':				'boxed',
+	'mediaPreference':       ['youtube', 'video', 'audio'],
 	'timemapsDataSelector':  '#musicbox-timemaps-data',
 	'scoreDataSelector':     '#musicbox-score-data',
 	'mediaSelector':         '#musicbox-video-container',
@@ -228,28 +314,33 @@ MusicBox.prototype.setOption = function (name) {
 // Accessor functions for official options --
 //
 
+
 MusicBox.prototype.getAnticipationTime = function () {
-	return this.getOption("anticipationTime");
+	return this.getOption('anticipationTime');
+}
+
+MusicBox.prototype.getMediaPreference = function () {
+	return this.getOption('mediaPreference');
 }
 
 MusicBox.prototype.getMediaSelector = function () {
-	return this.getOption("mediaSelector");
+	return this.getOption('mediaSelector');
 }
 
 MusicBox.prototype.getPollFrequency = function () {
-	return this.getOption("pollFrequency");
+	return this.getOption('pollFrequency');
 }
 
 MusicBox.prototype.getScoreDataSelector = function () {
-	return this.getSelectorOption("scoreDataSelector");
+	return this.getSelectorOption('scoreDataSelector');
 }
 
 MusicBox.prototype.getScoreSelector = function () {
-	return this.getSelectorOption("scoreSelector");
+	return this.getSelectorOption('scoreSelector');
 }
 
 MusicBox.prototype.getScrollAnimationTime = function () {
-	return this.getOption("scrollAnimationTime");
+	return this.getOption('scrollAnimationTime');
 }
 
 MusicBox.prototype.setScrollAnimationTime = function (value) {
@@ -257,28 +348,28 @@ MusicBox.prototype.setScrollAnimationTime = function (value) {
 		value = parseInt(value);
 		this.options.scrollAnimationTime = value;
 	} catch (error) {
-		console.log("Error in setting scrollAnimationTime", value);
+		console.log('Error in setting scrollAnimationTime', value);
 	}
 }
 
 MusicBox.prototype.getSystemsToShow = function () {
-	return this.getOption("systemsToShow");
+	return this.getOption('systemsToShow');
 }
 
 MusicBox.prototype.getTimemapsDataSelector = function () {
-	return this.getSelectorOption("timemapsDataSelector");
+	return this.getSelectorOption('timemapsDataSelector');
 }
 
 MusicBox.prototype.getWorkTitleSelector = function () {
-	return this.getSelectorOption("workTitleSelector");
+	return this.getSelectorOption('workTitleSelector');
 }
 
 MusicBox.prototype.getMovementTitleSelector = function () {
-	return this.getSelectorOption("movementTitleSelector");
+	return this.getSelectorOption('movementTitleSelector');
 }
 
 MusicBox.prototype.getRecordingTitleSelector = function () {
-	return this.getSelectorOption("recordingTitleSelector");
+	return this.getSelectorOption('recordingTitleSelector');
 }
 
 
@@ -288,11 +379,11 @@ MusicBox.prototype.getRecordingTitleSelector = function () {
 //
 
 MusicBox.prototype.getWorkTitle = function () {
-	return "title" in this.score ? this.score.title : "";
+	return 'title' in this.score ? this.score.title : '';
 }
 
 MusicBox.prototype.getMovementTitle = function (index) {
-	return "";
+	return '';
 }
 
 
@@ -303,12 +394,12 @@ MusicBox.prototype.getTimemapParameter = function (name, index) {
 		index = this.states.tmindex;
 	}
 	if (!this.timemaps) {
-		return "";
+		return '';
 	}
 	if (!this.timemaps[index]) {
-		return "";
+		return '';
 	}
-	return name in this.timemaps[index] ? this.timemaps[index][name] : "";
+	return name in this.timemaps[index] ? this.timemaps[index][name] : '';
 }
 
 
@@ -323,15 +414,15 @@ MusicBox.prototype.getTimemapParameterScalar = function (name, index) {
 
 
 MusicBox.prototype.getRecordingTitle = function (index) {
-	return this.getTimemapParameterScalar("title", index);
+	return this.getTimemapParameterScalar('title', index);
 }
 
 MusicBox.prototype.getRecordingTitleUrl = function (index) {
-	return this.getTimemapParameterScalar("title-url", index);
+	return this.getTimemapParameterScalar('title-url', index);
 }
 
 MusicBox.prototype.getRecordingUrl = function (index) {
-	return this.getTimemapParameterScalar("url", index);
+	return this.getTimemapParameterScalar('url', index);
 }
 
 
@@ -347,53 +438,70 @@ MusicBox.prototype.getRecordingUrl = function (index) {
 //     structures.  If no filename is given, then read from
 //     scripts stored on the page.
 //     The score definition would be found in this <script> element:
-//        <script id="musicbox-score-data" type="application/json">
+//        <script id='musicbox-score-data' type='application/json'>
 //     JSON structure:
 //     {
-//     	"title",
-//     	"svg"
-//     	"score": [ // list of movements
+//     	'title',
+//     	'svg'
+//     	'score': [ // list of movements
 //     					[ // system list for movement
-//								{"id", "width", "height"},
+//								{'id', 'width', 'height'},
 //								...
 //							]
 //						]
 //     }
 //     The timemaps definition would be found in this <script> element:
-//        <script id="musicbox-timemaps-data" type="application/json">
+//        <script id='musicbox-timemaps-data' type='application/json'>
 //     JSON structure:
 //     [
 //     	{	// timemap 0
-//     	   "video",
-//     	   "timemap": {"m", "moffset", "qstamp", "tstamp"}
+//     	   'video',
+//     	   'timemap': {'m', 'moffset', 'qstamp', 'tstamp'}
 //     	},	
 //     	...
 //     ]
 //
 //     If there is a filename, then the file will contain a single
-//     object, with a "score" parameter containing the score definition
-//     and a "timemaps" parameter containing the timemaps data.
+//     object, with a 'score' parameter containing the score definition
+//     and a 'timemaps' parameter containing the timemaps data.
 //
 
 MusicBox.prototype.loadData = function (scoreFile, timemapsFile) {
-
+	if (this.debug) {
+		console.log('MusicBox.prototype.loadData(', scoreFile, ', ', 
+				timemapsFile, ')');
+	}
 	if (scoreFile) {
-		console.log("Going to get score from", scoreFile);
 		this.loadScoreFromFile(scoreFile);
 	} else {
 		// this.loadScoreFromPage();
 	}
-
-	var that = this;
-	setTimeout(function(){
 	if (timemapsFile) {
-		console.log("Going to get timemaps from", timemapsFile);
-		that.loadTimemapsFromFile(timemapsFile);
+		this.loadTimemapsFromFile(timemapsFile);
 	} else {
 		// this.loadTimemapsFromPage();
 	}
-	}, 1000);
+}
 
+
+
+//////////////////////////////
+//
+// MusicBox.prototype.unpackSvg --
+//
+//
+
+MusicBox.prototype.unpackSvg = function () {
+	var element;
+	for (var property in this.score.svg) {
+		if (!this.score.svg.hasOwnProperty(property)) {
+			continue;
+		}
+		element = document.createElement('DIV');
+		element.innerHTML = atob(this.score.svg[property]);
+		this.score.svg[property] = element.children[0];
+	}
+	this.setScoreReady();
 }
 
 
@@ -405,6 +513,9 @@ MusicBox.prototype.loadData = function (scoreFile, timemapsFile) {
 //
 
 MusicBox.prototype.loadScoreFromFile = function (filename) {
+	if (this.debug) {
+		console.log('MusicBox.prototype.loadScoreFromFile(', filename, ')');
+	}
 
 	var that = this;
 	var request = new XMLHttpRequest();
@@ -413,14 +524,21 @@ MusicBox.prototype.loadScoreFromFile = function (filename) {
 		console.error(this.statusText);
 	});
 	request.addEventListener('load', function(event) {
+		if (this.debug) {
+			console.log('receiving score data, status:', request.status);
+		}
 		if (request.status == 200) {
 			try {
 				var result = JSON.parse(request.responseText);
 				if (!result.score) {
-					console.log("Error: no score defined in file");
+					console.log('Error: no score defined in file');
 				} else {
 					that.score = result;
-					console.log("Score loaded");
+					that.unpackSvg();
+					if (this.debug) {
+						console.log('   Trying .setupScore() from .loadScoreFromFile()');
+					}
+					that.setupScore();
 				}
 			} catch (error) {
 				console.log('Error parsing score file:', error.message);
@@ -440,6 +558,9 @@ MusicBox.prototype.loadScoreFromFile = function (filename) {
 //
 
 MusicBox.prototype.loadTimemapsFromFile = function (filename) {
+	if (this.debug) {
+		console.log('MusicBox.prototype.loadTimemapsFromFile(', filename, ')');
+	}
 
 	var that = this;
 	var request = new XMLHttpRequest();
@@ -452,11 +573,14 @@ MusicBox.prototype.loadTimemapsFromFile = function (filename) {
 			try {
 				var result = JSON.parse(request.responseText);
 				if (!result.timemaps) {
-					console.log("Warning: no timemaps defined in file");
+					console.log('Warning: no timemaps defined in file');
 				} else {
 					that.timemaps = result.timemaps;
 					that.loadTimemapFiles();
-					// that.setupScore();
+					if (this.debug) {
+						console.log('   Checking setupScore from .loadTimemapsFromFile()');
+					}
+					that.setupScore();
 				}
 			} catch (error) {
 				console.log('Error parsing timemaps:', error.message);
@@ -478,7 +602,9 @@ MusicBox.prototype.loadTimemapsFromFile = function (filename) {
 //
 
 MusicBox.prototype.loadTimemapFiles = function () {
-	console.log("GOT HERE IN LOADTIMEMAPFILES");
+	if (this.debug) {
+		console.log('MusicBox.prototype.loadTimemapFiles()');
+	}
 	var tms = this.timemaps;
 	if (typeof tms === 'undefined') {
 		return;
@@ -486,18 +612,20 @@ MusicBox.prototype.loadTimemapFiles = function () {
 
 	var filled = true;
 	for (var i=0; i<tms.length; i++) {
-		if (!("timemap" in tms[i])) {
+		if (!('timemap' in tms[i])) {
 			filled = false;
-			if ("file" in tms[i]) {
-console.log("LOADING ", i);
+			if ('file' in tms[i]) {
 				this.loadTimemapDataFile(i);
 			}
 		}
 	}
-	if (filled == true) {
-		this.setupScore();
+	if (filled) {
+		this.setTimemapsReady();
 	}
-
+	if (this.debug) {
+			console.log('Checking setupScore from .loadTimemapFiles()');
+	}
+	this.setupScore();
 }
 
 
@@ -509,19 +637,21 @@ console.log("LOADING ", i);
 //
 
 MusicBox.prototype.loadTimemapDataFile = function (index) {
+	if (this.debug) {
+		console.log('MusicBox.prototype.loadTimemapDataFile(', index, ')');
+	}
 	var tms = this.timemaps;
 	if (typeof tms === 'undefined') {
 		return;
 	}
 	var filename;
-	if ("file" in tms[index]) {
+	if ('file' in tms[index]) {
 		filename = tms[index].file;
 	}
 	if (!filename) {
 		returnl;
 	}
 
-	console.log("Going to load timemap", filename);
 	var that = this;
 	var request = new XMLHttpRequest();
 	request.open('GET', filename);
@@ -533,22 +663,25 @@ MusicBox.prototype.loadTimemapDataFile = function (index) {
 			try {
 				var result = JSON.parse(request.responseText);
 				if (!result.timemap) {
-					console.log("Warning: no timemap defined in file");
+					console.log('Warning: no timemap defined in file');
 				} else {
-					console.log("Storing timemap from", filename);
 					that.timemaps[index] = result;
 					var filled = true;
 					for (var i=0; i<tms.length; i++) {
-						if (!("timemap" in tms[index])) {
+						if (!('timemap' in tms[index])) {
 							filled = false;
-							if ("file" in tms[index]) {
+							if ('file' in tms[index]) {
 								this.loadTimemapDataFile(i);
 							}
 						}
 					}
-					if (filled == true) {
-						that.setupScore();
+					if (filled) {
+						that.setTimemapsReady();
 					}
+					if (this.debug) {
+						console.log('Checking setupScore from .loadTimemapDataFile()');
+					}
+					that.setupScore();
 				}
 			} catch (error) {
 				console.log('Error parsing timemap file:', error.message);
@@ -574,6 +707,9 @@ MusicBox.prototype.loadDataFromPage = function () {
 	if (!this.score) {
 		this.loadData();
 	}
+	if (this.debug) {
+		console.log('Checking setupScore from .loadDataFromPage()');
+	}
 	this.setupScore();
 }
 
@@ -588,16 +724,31 @@ MusicBox.prototype.loadDataFromPage = function () {
 //
 
 MusicBox.prototype.setupScore = function () {
+	if (this.debug) {
+		console.log('MusicBox.prototype.setupScore()');
+	}
+	if (!(this.getScoreReady() && this.getTimemapsReady())) {
+		if (this.debug) {
+			console.log('   Is scrore ready?: ', !!this.getScoreReady());
+			console.log('   Are timemaps ready?: ', !!this.getTimemapsReady());
+			console.log('   Score and timemaps are not both ready');
+		}
+		// score is not ready
+		return;
+	}
+	if (this.debug) {
+		console.log('   Score and timemaps are both ready');
+	}
+	if (this.getInitialized()) {
+		// score was already setup
+		return;
+	}
+	this.setInitialized();
+	this.setActiveTimemap();
+  	this.createMediaInterface(this.getActiveMediaType());
 	this.initializeDisplay();
 	this.initializeInterface();
-	var that = this;
-	setTimeout(function() {
-		that.processHash();
-	}, 2000);
-	if (!(document.getElementById('audio') ||
-		document.getElementById('video'))) {
-		this.createMediaInterface();
-	}
+	this.processHash();
 }
 
 
@@ -609,7 +760,7 @@ MusicBox.prototype.setupScore = function () {
 
 MusicBox.prototype.initializeInterface = function () {
 	var that = this;
-	window.addEventListener("keydown", function(event) {
+	window.addEventListener('keydown', function(event) {
 		that.keydownEventHandler(event);
 	});
 	var box = document.querySelector(this.getScoreSelector());
@@ -623,19 +774,23 @@ MusicBox.prototype.initializeInterface = function () {
 
 //////////////////////////////
 //
-// MusicBox.prototype.loadScoreData --
+// MusicBox.prototype.loadScoreDataFromPage --
 //
 
 MusicBox.prototype.loadScoreData = function () {
-	var data = document.querySelector(this.getScoreDataSelector());
-	if (!data) {
+	if (this.debug) {
+		console.log('MusicBox.prototype.loadScoreData()');
+	}
+	var dataelement = document.querySelector(this.getScoreDataSelector());
+	if (!dataelement) {
 		console.log('Cannot find score data');
 	}
 	try {
-		this.score = JSON.parse(data.textContent);
+		this.score = JSON.parse(dataelement.textContent);
+		this.unpackSvg();
 	} catch (error) {
-		console.log('Error parsing timemaps:', error.message);
-		console.log('text:', data.textContent);
+		console.log('Error parsing score data:', error.message);
+		console.log('text:', dataelement.textContent);
 	}
 }
 
@@ -732,11 +887,11 @@ MusicBox.prototype.loadTimemapData = function () {
 
 //////////////////////////////
 //
-// getSvgImage --
+// getSvgImageHTML --
 //
 
 MusicBox.prototype.getSvgImage = function (tag) {
-	return atob(this.score.svg[tag]);
+	return this.score.svg[tag].outerHTML;
 }
 
 
@@ -757,13 +912,13 @@ MusicBox.prototype.processHash = function () {
 	var repeat = 0;
 	var matches;
 	var start = location.hash;
-	var stop  = "";
+	var stop  = '';
 
 	if (matches = start.match(/(.*)-([a-z].*)/)) {
 		start = matches[1];
 		stop  = matches[2];
 	}
-	console.log("START position", start);
+	console.log('START position', start);
 
 	if (matches = start.match(/m(\d+)/)) {
 		measure = parseInt(matches[1]);
@@ -776,18 +931,18 @@ MusicBox.prototype.processHash = function () {
 	}
 
 	var hashtime = this.getHashTimeInfo(measure, beat, repeat);
-	console.log("HASHSTARTTIME", hashtime);
+	console.log('HASHSTARTTIME', hashtime);
 	this.states.anchorstart = hashtime.tstamp;
 	var iface = this.getActiveMediaElement();
-console.log("HASH TIME =", this.states.anchorstart);
+console.log('HASH TIME =', this.states.anchorstart);
 	iface.currentTime = this.states.anchorstart;
-console.log("GOT HERE");
+console.log('GOT HERE');
 	iface.play();
 
 	if (!stop) {
 		return;
 	}
-	console.log("STOP position", stop);
+	console.log('STOP position', stop);
 
 	measure = 1;
 	beat = 1;
@@ -804,7 +959,7 @@ console.log("GOT HERE");
 	}
 
 	hashtime = this.getHashTimeInfo(measure, beat, repeat);
-	console.log("HASHENDTIME", hashtime);
+	console.log('HASHENDTIME', hashtime);
 	this.states.anchorstop = hashtime.tstamp;
 	if (this.states.anchorstart >= this.states.anchorstop) {
 		this.states.anchorstop = 0;
@@ -936,6 +1091,9 @@ MusicBox.prototype.keydownEventHandler = function (event) {
 //
 
 MusicBox.prototype.createMediaInterface  = function (itype) {
+	if (this.debug) {
+		console.log('MusicBox.prototype.createMediaInterface(', itype, ')');
+	}
 	// check for case #1
 	// check for case #2
 	// check for case #3
@@ -946,13 +1104,23 @@ MusicBox.prototype.createMediaInterface  = function (itype) {
 	// check for case #8
 
 	if (itype == 'audio') {
+		if (this.debug) {console.log('   CASE 1, creating AUDIO element')}
+		this.setScoreStyle(this.getOption('audioStyle'));
 		this.createAudioInterface('audio');
 	} else if (itype == 'video') {
+		if (this.debug) {console.log('   CASE 2, creating VIDEO element')}
+		this.setScoreStyle(this.getOption('videoStyle'));
 		this.createVideoInterface('video');
 	} else if (this.getAudioFile()) {
+		if (this.debug) {console.log('   CASE 3, creating AUDIO element')}
+		this.setScoreStyle(this.getOption('audioStyle'));
 		this.createAudioInterface('audio');
 	} else if (this.getVideoFile()) {
+		if (this.debug) {console.log('   CASE 4, creating VIDEO element')}
+		this.setScoreStyle(this.getOption('videoStyle'));
 		this.createVideoInterface('video');
+	} else {
+		console.log('WAT IS GOING ON?', itype, this.getAudioFile());
 	}
 }
 
@@ -1069,7 +1237,7 @@ MusicBox.prototype.playMedia = function (event) {
 
 MusicBox.prototype.stopMedia = function (event) {
 	this.states.playing = 0; // make timemap monitoring setInterval() exit
-	this.unhighlightRange();
+	this.unhighlightRange(0, this.getActiveTimemap().length-1);
 }
 
 
@@ -1084,29 +1252,29 @@ MusicBox.prototype.stopMedia = function (event) {
 MusicBox.prototype.unhighlightRange = function (starti, endi) {
 	var tm = this.getActiveTimemap();
 	if (!tm) {
-		console.log("Error: no timemap");
+		console.log('Error: no timemap');
 		return;
 	}
 	for (var i=starti; i<=endi; i++) {
-		var mytime = tm[i].qstamp.toString().replace(/\./, "d");
-		var offclass = ".noteoff-" + mytime;
+		var mytime = tm[i].qstamp.toString().replace(/\./, 'd');
+		var offclass = '.noteoff-' + mytime;
 		var offlist = document.querySelectorAll(offclass);
 		for (var j=0; j<offlist.length; j++) {
-			if (!offlist[j].getAttribute("class").match(/\bon\b/)) {
+			if (!offlist[j].getAttribute('class').match(/\bon\b/)) {
 				// Can't use .className on SVG elements
 				// Don't turn of notes which are already off.
 				continue;
 			}
-			var classinfo = offlist[j].getAttribute("class");
-			classinfo = classinfo.replace(/ ?\bon\b/, "");
-			offlist[j].setAttribute("class", classinfo);
-			offlist[j].style.color  = "black";
-			offlist[j].style.stroke = "black";
+			var classinfo = offlist[j].getAttribute('class');
+			classinfo = classinfo.replace(/ ?\bon\b/, '');
+			offlist[j].setAttribute('class', classinfo);
+			offlist[j].style.color  = 'black';
+			offlist[j].style.stroke = 'black';
 			if (offlist[j].style.animation) {
-				offlist[j].style["animation"]         = "";
-				offlist[j].style["-webkit-animation"] = "";
-				offlist[j].style["-moz-animation"]    = "";
-				offlist[j].style["-ms-animation"]     = "";
+				offlist[j].style['animation']         = '';
+				offlist[j].style['-webkit-animation'] = '';
+				offlist[j].style['-moz-animation']    = '';
+				offlist[j].style['-ms-animation']     = '';
 			}
 		}
 	}
@@ -1123,23 +1291,23 @@ MusicBox.prototype.unhighlightRange = function (starti, endi) {
 MusicBox.prototype.highlightRange = function (starti, endi) {
 	var tm = this.getActiveTimemap();
 	if (!tm) {
-		console.log("Error: no timemap");
+		console.log('Error: no timemap');
 	}
 	for (var i=starti; i<=endi; i++) {
-		var mytime = tm[i].qstamp.toString().replace(/\./, "d");
-		var onclass = ".noteon-" + mytime;
+		var mytime = tm[i].qstamp.toString().replace(/\./, 'd');
+		var onclass = '.noteon-' + mytime;
 		var onlist = document.querySelectorAll(onclass);
 		for (var j=0; j<onlist.length; j++) {
-			if (onlist[j].classList.contains("on")) {
+			if (onlist[j].classList.contains('on')) {
 				// only turn on once
 				continue;
 			}
 			// can't use .className with SVG elements
-			var classinfo = onlist[j].getAttribute("class");
-			onlist[j].setAttribute("class", classinfo + " on");
-			onlist[j].style.color  = "red";
-			onlist[j].style.stroke = "red";
-			if (onlist[j].classList.contains("trill")) {
+			var classinfo = onlist[j].getAttribute('class');
+			onlist[j].setAttribute('class', classinfo + ' on');
+			onlist[j].style.color  = 'red';
+			onlist[j].style.stroke = 'red';
+			if (onlist[j].classList.contains('trill')) {
 				this.createTrillAnimation(onlist[j], i);
 			}
 			this.bringIntoView(onlist[j], i);
@@ -1159,18 +1327,18 @@ MusicBox.prototype.highlightRange = function (starti, endi) {
 MusicBox.prototype.createTrillAnimation = function (element, starti) {
 	var tm = this.getActiveTimemap();
 	var ontime = tm[starti].tstamp;
-	var offq = element.getAttribute("class").match(/noteoff-([\dd]+)/)[1];
-	offq = offq.replace(/d/, ".");
+	var offq = element.getAttribute('class').match(/noteoff-([\dd]+)/)[1];
+	offq = offq.replace(/d/, '.');
 	var offtime = this.getTimeFromQI(starti, offq);
 	var duration = offtime - ontime + 0.0001;
 	var count = parseInt(duration / 0.1);
 	if (count < 1) {
 		return;
 	}
-	element.style["animation"]         = "trill .1s " + count;
-	element.style["-webkit-animation"] = "trill .1s " + count;
-	element.style["-moz-animation"]    = "trill .1s " + count;
-	element.style["-ms-animation"]     = "trill .1s " + count;
+	element.style['animation']         = 'trill .1s ' + count;
+	element.style['-webkit-animation'] = 'trill .1s ' + count;
+	element.style['-moz-animation']    = 'trill .1s ' + count;
+	element.style['-ms-animation']     = 'trill .1s ' + count;
 }
 
 
@@ -1224,18 +1392,31 @@ MusicBox.prototype.bringIntoView = function (element) {
 		this.states.lastscroll = zment;
 	}
 
-	// console.log("musicbox",$('#musicbox').offset().top,
-	// 		"st", $('#musicbox').scrollTop(),
-	// 		"tr", $(zment).offset().top);
+	// console.log('musicbox',$('#musicbox').offset().top,
+	// 		'st', $('#musicbox').scrollTop(),
+	// 		'tr', $(zment).offset().top);
 
 	var sselect = this.getScoreSelector();
+console.log("SCORE SELECTOR", sselect);
 	if (zment && (this.states.lastscroll !== zment)) {
-		//zment.scrollIntoViewIfNeeded(true);
-		//zment.scrollIntoView({behavior:"smooth"});
-		$(sselect).animate({
-			scrollTop: $(zment).offset().top + $(sselect).scrollTop()
-					- $(sselect).offset().top
-		}, this.getScrollAnimationTime());
+		try {
+			var scrolltop = $(zment).offset().top + $(sselect).scrollTop() 
+				- $(sselect).offset().top;
+console.log('ANIMATE scrolltop =', scrolltop, "animate time:", 
+	this.getScrollAnimationTime());
+console.log("GOT HERE");
+			$(sselect).animate({ 
+					scrollTop: scrolltop},
+					this.getScrollAnimationTime(), "swing"
+				);
+		} catch (error) {
+			// jQuery not available, do fallback with no animation
+			if (this.debug) {
+				console.log("No jQuery found");
+			}
+			zment.scrollIntoViewIfNeeded(true);
+			zment.scrollIntoView({behavior:'smooth'});
+		}
 		this.states.lastscroll = zment;
 	}
 	return;
@@ -1250,7 +1431,7 @@ MusicBox.prototype.bringIntoView = function (element) {
 
 			if (zment && (this.states.lastscroll !== zment)) {
 				// zment.scrollIntoViewIfNeeded(true);
-				// zment.scrollIntoView({behavior:"smooth"});
+				// zment.scrollIntoView({behavior:'smooth'});
 				$('html, body').animate({
 					scrollTop: $(zment).offset().top
 				}, this.getScrollAnimationTime());
@@ -1319,14 +1500,15 @@ MusicBox.prototype.checkTimeMap = function (nowtime) {
 //////////////////////////////
 //
 // addNoteControls -- Add onclick callback so that when clicking on a note,
-//    the audio will start playing from that point in the score.
+//    the audio will start playing from that point in the score.  Change this
+//    to an event delegation later so not so many callbacks are added.
 //
 
 MusicBox.prototype.addNoteControls = function () {
-	var images = document.querySelectorAll(this.getScoreSelector() + " svg");
+	var images = document.querySelectorAll(this.getScoreSelector() + ' svg');
 	var that = this;
 	for (var i=0; i<images.length; i++) {
-		var notes = images[i].querySelectorAll("g[class^='noteon-']");
+		var notes = images[i].querySelectorAll('g[class^="noteon-"]');
 		for (var jj=0; jj<notes.length; jj++) {
 			if (!notes[jj].className.baseVal.match(/noteon/)) {
 				if (i==0) { console.log(notes[jj]); };
@@ -1347,13 +1529,13 @@ MusicBox.prototype.addNoteControls = function () {
 
 MusicBox.prototype.playFromEvent = function (event) {
 	var targ = event.target;
-	while (targ.nodeName != "BODY") {
+	while (targ.nodeName != 'BODY') {
 		if (targ.className === null ||
-				typeof targ.className != "object") {
+				typeof targ.className != 'object') {
 			break;
 		}
-		if (targ.getAttribute("class")) {
-		   var matches = targ.getAttribute("class").match("noteon-([^\\s]+)");
+		if (targ.getAttribute('class')) {
+		   var matches = targ.getAttribute('class').match('noteon-([^\\s]+)');
 		} else {
 			matches = null;
 		}
@@ -1385,7 +1567,7 @@ MusicBox.prototype.playFromEvent = function (event) {
 
 MusicBox.prototype.getTimeFromQuarterNote = function (stamp, offset) {
 	var tm = this.getActiveTimemap();
-	stamp = stamp.replace(/d/, ".");
+	stamp = stamp.replace(/d/, '.');
 	var locations = [];
 	for (var i=0; i<tm.length; i++) {
 		if (tm[i].qstamp == stamp) {
@@ -1481,42 +1663,49 @@ MusicBox.prototype.initializeDisplay = function () {
 		this.displayScore(1);
 	}
 
+	var style = this.getScoreStyle();
 	var width;
 	var height;
-	for (i=0; i<music.length; i++) {
-		for (j=0; j<music[i].length; j++) {
-			width  = music[i][j].width;
-			height = music[i][j].height;
-			if (width > maxwidth) {
-				maxwidth = width;
-			}
-			if (height > maxheight) {
-				maxheight = height;
-			}
-		}
-	}
-	box.style.height = maxheight * this.getSystemsToShow() + 'px';
-	this.setActiveTimemap();
 
-	var element = document.querySelector(this.getRecordingTitleSelector());
-	var rtitle = this.getRecordingTitle();
-	if (element && rtitle) {
-		var output = "";
-		var rurl = this.getRecordingTitleUrl();
-		if (rurl) {
-			output += '<a target="_new" href="';
-			output += rurl;
-			output += '">';
+	if (style != 'full') {
+		for (i=0; i<music.length; i++) {
+			for (j=0; j<music[i].length; j++) {
+				width  = music[i][j].width;
+				height = music[i][j].height;
+				if (width > maxwidth) {
+					maxwidth = width;
+				}
+				if (height > maxheight) {
+					maxheight = height;
+				}
+			}
 		}
-		output += rtitle;
-		if (rurl) {
-			output += '</a>';
+console.log('SDFASDFASDF');
+		box.style.height = maxheight * this.getSystemsToShow() + 'px';
+   	// setActiveTimemap has to occur before this function is called.
+		// this.setActiveTimemap();
+	
+		var element = document.querySelector(this.getRecordingTitleSelector());
+		var rtitle = this.getRecordingTitle();
+		if (element && rtitle) {
+			var output = '';
+			var rurl = this.getRecordingTitleUrl();
+			if (rurl) {
+				output += '<a target="_new" href="';
+				output += rurl;
+				output += '">';
+			}
+			output += rtitle;
+			if (rurl) {
+				output += '</a>';
+			}
+			element.innerHTML = output;
 		}
-		element.innerHTML = output;
 	}
+
 }
-
-
+	
+	
 
 /////////////////////////////
 //
@@ -1535,6 +1724,7 @@ MusicBox.prototype.displayScore = function (num) {
 	var Music     = this.score.score;
 	var Maxwidth  = this.getMaxSystemWidth();
 	var Maxheight = this.getMaxSystemHeight();
+	var style = this.getScoreStyle();
 	content += '<table class="music">';
 	for (var i=0; i<Music[index].length; i++) {
 		sysid   = Music[index][i].id;
@@ -1548,7 +1738,11 @@ MusicBox.prototype.displayScore = function (num) {
 		height  = Music[index][i].height;
 		content += '<tr>'
 		content += '<td style="width:'
-		content += Maxwidth + '; height:' + Maxheight + '">';
+		content += Maxwidth + ';'
+		if (style != 'full') {
+			content += ' height:' + Maxheight;
+		}
+		content += '">';
 		content += this.getSvgImage(sysid);
 		content +=  '</td></tr>';
 	}
@@ -1558,16 +1752,81 @@ MusicBox.prototype.displayScore = function (num) {
 
 
 
+//////////////////////////////
+//
+// MusicBox.prototype.getSvgElementList --
+//
+
+MusicBox.prototype.getSvgElementList = function () {
+	var svgs = this.score.svg;
+	var output = [];
+	for (var p in svgs) {
+		if (!svgs.hasOwnProperty(p)) {
+			continue;
+		}
+		output.push(svgs[p]);
+	}
+	return output;
+}
+
+
+
+//////////////////////////////
+//
+// MusicBox.prototype.getQstamps -- Return all of the noteon-* and noteoff-*
+//    elements in the score.
+//
+
+MusicBox.prototype.getQstamps = function () {
+	var svgs = this.getSvgElementList();
+	var qstamps = {};
+	var i, j, k;
+	var tag;
+	var result;
+	var reg = new RegExp(/noteo[nf]+-([d\d]+)/gi);
+	for (i=0; i<svgs.length; i++) {
+		var onselector  = 'g[class^="noteon-"]';
+		var offselector = 'g[class^="noteoff-"]';
+		var onlist = svgs[i].querySelectorAll(onselector);
+		var offlist = svgs[i].querySelectorAll(offselector);
+		for (j=0; j<onlist.length; j++) {
+			while ((result = reg.exec(onlist[j].className.baseVal)) !== null) {
+				tag = result[1].replace('d', '.');
+				qstamps[tag] = '1';
+			}
+		}
+		for (j=0; j<offlist.length; j++) {
+			while ((result = reg.exec(onlist[j].className.baseVal)) !== null) {
+				tag = result[1].replace('d', '.');
+				qstamps[tag] = '1';
+			}
+		}
+	}
+
+	var output = [];
+	for (var p in qstamps) {
+		if (!qstamps.hasOwnProperty(p)) {
+			continue;
+		}
+		var item = p.replace(/noteo[nf]+-/, '');
+		output.push(item);
+	}
+
+	return output;
+}
+
+
+
 ///////////////////////////////
 //
-// MusicBox.prototype.selectTimemap -- Takes a stored timemap 
+// MusicBox.prototype.activateTimemap -- Takes a stored timemap 
 //     from the MusicBox.timemaps array and interpolates it 
 //     with all unspecified times from the score.  Not that the
 //     score has to be placed on the page before this function
 //     is called, since it needs to read qstamps from the score.
 //
 
-MusicBox.prototype.selectTimemap = function (index) {
+MusicBox.prototype.activateTimemap = function (index) {
 	if (!index) {
 		index = 0;
 	}
@@ -1590,28 +1849,12 @@ MusicBox.prototype.selectTimemap = function (index) {
 	}
 
 	var basemap = this.timemaps[index].timemap;
-
-	var onselector = this.getScoreSelector();
-	onselector += " svg g[class^='noteon-']";
-
-	var offselector = this.getScoreSelector();
-	offselector += " svg g[class^='noteoff-']";
-
-	var onlist  = Array.prototype
-						.slice.call(document.querySelectorAll(onselector));
-	var offlist = Array.prototype
-						.slice.call(document.querySelectorAll(offselector));
-
-	// Probably don't need both on- and off-times, since
-	// notes should always have both, but being safe.
-	var qtimes = this.getTimes(onlist.concat(offlist));
-	// console.log("TIMES", qtimes);
-	// console.log("BASEMAP", basemap);
+	var qstamps = this.getQstamps();
+	qstamps = qstamps.sort(function(a,b){return a-b});
 
 	var nts = [];
 	var curi = 0;
-	var i;
-	var j;
+	var i, j;
 	var nexti;
 	var newstamp;
 	var pretarget;
@@ -1619,15 +1862,15 @@ MusicBox.prototype.selectTimemap = function (index) {
 	var interp;
 
 	// check if the inputs are correct:
-	//console.log("QTIMES", qtimes);
-	//console.log("TIMEMAP", basemap);
-	for (i=0; i<qtimes.length; i++) {
-		if (qtimes[i] == basemap[curi].qstamp) {
+	// console.log('QTIMES', qstamps);
+	// console.log('TIMEMAP', basemap);
+	for (i=0; i<qstamps.length; i++) {
+		if (qstamps[i] == basemap[curi].qstamp) {
 			nts.push(basemap[curi]);
 			curi++;
 			continue;
 		}
-		if (qtimes[i] > basemap[curi].qstamp) {
+		if (qstamps[i] > basemap[curi].qstamp) {
 			curi++;
 			i--;
 			continue;
@@ -1635,29 +1878,28 @@ MusicBox.prototype.selectTimemap = function (index) {
 		// need to interpolate value
 		if (curi == 0) {
 			// but can't interpolate if nothing at start (or end)
-			console.log("Error: no starting event time");
+			console.log('Error: no starting event time');
 		}
 		// find next extant timestamp
 		target = basemap[curi];
 		pretarget = nts[nts.length-1];
-		interp = this.getInterpolation(qtimes[i], pretarget, target);
+		interp = this.getInterpolation(qstamps[i], pretarget, target);
 
 		// Check individual interpolation assignments:
-		//console.log("PRETARGET", pretarget);
-		//console.log("QSTAMP", qtimes[i]);
-		//console.log("TARGET", target);
-		//console.log("INTERPOLATION", qtimes[i], interp);
-		//console.log("");
+		//console.log('PRETARGET', pretarget);
+		//console.log('QSTAMP', qstamps[i]);
+		//console.log('TARGET', target);
+		//console.log('INTERPOLATION', qstamps[i], interp);
+		//console.log('');
 
 		newstamp = {};
 		newstamp.tstamp = interp;
-		newstamp.qstamp = qtimes[i];
+		newstamp.qstamp = qstamps[i];
 		// Add measure and moffset keys here as well.
 		nts.push(newstamp);
 	}
 
 	// check if the output is correct:
-	//console.log(nts);
 	this.states.timemap = nts;
 	this.states.tmindex = index;
 }
@@ -1698,8 +1940,8 @@ MusicBox.prototype.getTimes = function (list) {
 	var tag;
 	for (i=0; i<list.length; i++) {
 		while ((result = reg.exec(list[i].className.baseVal)) !== null) {
-			tag = result[1].replace("d", ".");
-			times[tag] = "1";
+			tag = result[1].replace('d', '.');
+			times[tag] = '1';
 		}
 	}
 	var keys = Object.keys(times);

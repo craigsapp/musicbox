@@ -2,9 +2,13 @@
 
 /*** General stylings ****************************************************/
 
+html {
+	margin-bottom: 100px;
+}
+
 #musicbox-score-container {
-	overflow-y: scroll;
-	overflow-x: hidden;
+/*	overflow-y: scroll;
+	overflow-x: hidden; */
 }
 
 #musicbox-score-container div {
