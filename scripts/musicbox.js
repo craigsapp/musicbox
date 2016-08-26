@@ -1629,6 +1629,7 @@ console.log("TIMEVAL", timeval);
 
 MusicBox.prototype.getTimeFromQuarterNote = function (stamp, offset) {
 	var tm = this.getActiveTimemap();
+console.log("STAMP", stamp);
 	stamp = stamp.toString().replace(/d/, '.');
 	var locations = [];
 	for (var i=0; i<tm.length; i++) {
