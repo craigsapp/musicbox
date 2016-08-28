@@ -789,7 +789,6 @@ MusicBox.prototype.setupScore = function () {
 		return;
 	}
 	this.prepareAlignment(0, this.getScoreSelector());
-);
 }
 
 
