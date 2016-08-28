@@ -788,7 +788,8 @@ MusicBox.prototype.setupScore = function () {
 		// score was already setup
 		return;
 	}
-	this.prepareScore();
+	this.prepareAlignment(0, this.getScoreSelector());
+);
 }
 
 
@@ -797,9 +798,9 @@ MusicBox.prototype.setupScore = function () {
 // MusicBox.prototype.prepareAlignment --
 //
 
-MusicBox.prototype.prepareAlignment = function (selector) {
+MusicBox.prototype.prepareAlignment = function (index, selector) {
 	this.setInitialized();
-	this.setActiveTimemap(0, selector);
+	this.setActiveTimemap(index, selector);
 	this.createMediaInterface(this.getActiveMediaType());
 	this.initializeDisplay();
 	this.initializeInterface();
@@ -1908,6 +1909,7 @@ MusicBox.prototype.activateTimemap = function (index, selector) {
 	if (index > this.timemaps.length - 1) {
 		index = this.timemaps.length - 1;
 	}
+console.log("INDEX = ", index, "SEL", selector);
 
 	if (this.timemaps[index].video) {
 	this.setVideoFile(this.timemaps[index].video);
