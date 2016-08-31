@@ -151,9 +151,9 @@ MusicBox.prototype.setActiveTimemap = function (index, selector) {
 	var newstart = this.states.timemap[0].tstamp + this.getAnticipationTime()/1000.0;
 	var iface = this.getActiveMediaElement();
 	if (iface && (newstart >= 0.0) && (newstart > this.states.lasttime)) {
+		console.log("pushing start time ahead to", newstart, "seconds");
 		iface.currentTime    = newstart;
 		this.states.lasttime = newstart;
-		console.log("pushing start time ahead to", newstart, "seconds");
 	}
 }
 
