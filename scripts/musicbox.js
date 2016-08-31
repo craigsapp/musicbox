@@ -1922,6 +1922,7 @@ console.log("INDEX = ", index, "SEL", selector);
 	}
 
 	var basemap = this.timemaps[index].timemap;
+console.log("SELECTED TIMEMAP INDEX: " , index, basemap);
 	var qstamps = this.getQstamps(selector);
 	qstamps = qstamps.sort(function(a,b){return a-b});
 
@@ -1935,7 +1936,7 @@ console.log("INDEX = ", index, "SEL", selector);
 	var interp;
 
 	// check if the inputs are correct:
-	console.log('QTIMES', qstamps);
+	console.log('QSTAMPS', qstamps);
 	console.log('TIMEMAP', basemap);
 	for (i=0; i<qstamps.length; i++) {
 		if (qstamps[i] == basemap[curi].qstamp) {
