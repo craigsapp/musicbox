@@ -1923,6 +1923,7 @@ console.log("INDEX = ", index, "SEL", selector);
 
 	var basemap = this.timemaps[index].timemap;
 console.log("SELECTED TIMEMAP INDEX: " , index, basemap);
+console.log("BASEMAP SIZE", basemap.length);
 	var qstamps = this.getQstamps(selector);
 	qstamps = qstamps.sort(function(a,b){return a-b});
 
@@ -1939,6 +1940,7 @@ console.log("SELECTED TIMEMAP INDEX: " , index, basemap);
 	console.log('QSTAMPS', qstamps);
 	console.log('TIMEMAP', basemap);
 	for (i=0; i<qstamps.length; i++) {
+console.log("CURI", curi, basemap[curi]);
 		if (qstamps[i] == basemap[curi].qstamp) {
 			nts.push(basemap[curi]);
 			curi++;
