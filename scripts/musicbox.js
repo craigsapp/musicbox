@@ -1266,6 +1266,12 @@ MusicBox.prototype.playMedia = function (event) {
 	this.states.playing = 1;
 	var iface = this.getActiveMediaElement();
 	this.states.lasttime = iface.currentTime;
+	var newstart = this.states.timemap[0].tstamp - this.getAnticipationTime();
+	if ((newstart >= 0.0) && (newstat > this.states.lasttime)) {
+		iface.currentTime    = newstart;
+		this.states.lasttime = newstart;
+		console.log("Pushing start time ahead to", newstart, "seconds);
+	}
 	var that = this;
 	this.states.refresh = setInterval(function() {
 		if (that.states.playing == 0) {
@@ -1908,7 +1914,6 @@ MusicBox.prototype.activateTimemap = function (index, selector) {
 	if (index > this.timemaps.length - 1) {
 		index = this.timemaps.length - 1;
 	}
-console.log("INDEX = ", index, "SEL", selector);
 
 	if (this.timemaps[index].video) {
 	this.setVideoFile(this.timemaps[index].video);
@@ -1922,8 +1927,6 @@ console.log("INDEX = ", index, "SEL", selector);
 	}
 
 	var basemap = this.timemaps[index].timemap;
-console.log("SELECTED TIMEMAP INDEX: " , index, basemap);
-console.log("BASEMAP SIZE", basemap.length);
 	var qstamps = this.getQstamps(selector);
 	qstamps = qstamps.sort(function(a,b){return a-b});
 
@@ -1939,10 +1942,11 @@ console.log("BASEMAP SIZE", basemap.length);
 	// check if the inputs are correct:
 	console.log('QSTAMPS', qstamps);
 	console.log('TIMEMAP', basemap);
-console.log("QSTAMPS SIZE", qstamps.length);
-console.log("BASMAP SIZE", basemap.length);
 	for (i=0; i<qstamps.length; i++) {
-console.log("CURI", curi, basemap[curi]);
+		if (curi >= basemap.length) {
+			console.log("Error: timemap is not the correct size");
+			console.log("Check to see if beat durations are correct");
+		}
 		if (qstamps[i] == basemap[curi].qstamp) {
 			nts.push(basemap[curi]);
 			curi++;
