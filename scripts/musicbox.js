@@ -58,7 +58,7 @@ function MusicBox(filename, filename2) {
 		this.loadData(filename, filename2);
 	}
 
-	this.debug = 'true';   // for printing debugging statements
+	this.debug = 0;   // for printing debugging statements
 
 	return this;
 };
@@ -148,13 +148,7 @@ MusicBox.prototype.setActiveTimemap = function (index, selector) {
 			break;
 		}
 	}
-	var newstart = this.states.timemap[0].tstamp + this.getAnticipationTime()/1000.0;
-	var iface = this.getActiveMediaElement();
-	if (iface && (newstart >= 0.0) && (newstart > this.states.lasttime)) {
-		console.log("pushing start time ahead to", newstart, "seconds");
-		iface.currentTime    = newstart;
-		this.states.lasttime = newstart;
-	}
+
 }
 
 MusicBox.prototype.getActiveTimemap = function () {
@@ -1206,6 +1200,7 @@ MusicBox.prototype.createAudioInterface = function (id) {
 	var that = this;
 	audio.setAttribute('controls', 'controls');
 	audio.id              = id;
+	audio.style.preload   = 'metadata';
 	audio.style.position  = 'fixed';
 	audio.style.bottom    = '0';
 	audio.style.right     = '0';
@@ -1217,6 +1212,27 @@ MusicBox.prototype.createAudioInterface = function (id) {
 	text += '" type="' + that.getAudioType() + '"/>';
 	audio.innerHTML = text;
 	this.setActiveMediaElement(audio);
+
+	// timemap is probably already loaded:
+	if (!this.states.timemap) {
+		return;
+	}
+
+	var newstart = this.states.timemap[0].tstamp 
+			+ this.getAnticipationTime()/1000.0;
+	var iface = this.getActiveMediaElement();
+	var that = this;
+   if (iface) {
+		iface.addEventListener("loadedmetadata", function() {
+			console.log("LOADED META DATA");
+			if ((newstart >= 0.0) && (newstart > that.states.lasttime)) {
+				console.log("pushing start time ahead to", newstart, "seconds");
+				iface.currentTime    = newstart;
+				that.states.lasttime = newstart;
+				console.log("Current time", iface.currentTime);
+			}
+		});
+	}
 }
 
 
@@ -1563,6 +1579,15 @@ MusicBox.prototype.checkTimeMap = function (nowtime) {
 	if ((startindex >=0) && (stopindex >= 0)) {
 		this.highlightRange(startindex, stopindex);
 		this.unhighlightRange(startindex, stopindex);
+	}
+
+	var endtime = this.states.timemap[this.states.timemap.length-1].tstamp;
+	if (endtime < nowtime) {
+		console.log("Stopping audio playback");
+		var iface = this.getActiveMediaElement();
+		if (iface) {
+			iface.pause();
+		}
 	}
 }
 
@@ -1947,8 +1972,8 @@ MusicBox.prototype.activateTimemap = function (index, selector) {
 	var interp;
 
 	// check if the inputs are correct:
-	console.log('QSTAMPS', qstamps);
-	console.log('TIMEMAP', basemap);
+	//console.log('QSTAMPS', qstamps);
+	//console.log('TIMEMAP', basemap);
 	for (i=0; i<qstamps.length; i++) {
 		if (curi >= basemap.length) {
 			console.log("Error: timemap is not the correct size");
