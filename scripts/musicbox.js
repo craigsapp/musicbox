@@ -1939,6 +1939,8 @@ console.log("BASEMAP SIZE", basemap.length);
 	// check if the inputs are correct:
 	console.log('QSTAMPS', qstamps);
 	console.log('TIMEMAP', basemap);
+console.log("QSTAMPS SIZE", qstamps.length);
+console.log("BASMAP SIZE", basemap.length);
 	for (i=0; i<qstamps.length; i++) {
 console.log("CURI", curi, basemap[curi]);
 		if (qstamps[i] == basemap[curi].qstamp) {
