@@ -1270,7 +1270,7 @@ MusicBox.prototype.playMedia = function (event) {
 	if ((newstart >= 0.0) && (newstat > this.states.lasttime)) {
 		iface.currentTime    = newstart;
 		this.states.lasttime = newstart;
-		console.log("Pushing start time ahead to", newstart, "seconds);
+		console.log("Pushing start time ahead to", newstart, "seconds");
 	}
 	var that = this;
 	this.states.refresh = setInterval(function() {
