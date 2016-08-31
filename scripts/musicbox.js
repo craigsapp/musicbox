@@ -1267,7 +1267,7 @@ MusicBox.prototype.playMedia = function (event) {
 	var iface = this.getActiveMediaElement();
 	this.states.lasttime = iface.currentTime;
 	var newstart = this.states.timemap[0].tstamp - this.getAnticipationTime();
-	if ((newstart >= 0.0) && (newstat > this.states.lasttime)) {
+	if ((newstart >= 0.0) && (newstart > this.states.lasttime)) {
 		iface.currentTime    = newstart;
 		this.states.lasttime = newstart;
 		console.log("Pushing start time ahead to", newstart, "seconds");
