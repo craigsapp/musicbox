@@ -176,14 +176,16 @@ MusicBox.prototype.getAudioType = function () {
 }
 
 MusicBox.prototype.setAudioFile = function () {
-	console.log("SET AUDIO FILE ARGUMENTS ", arguments);
+console.log("SET AUDIO FILE ARGUMENTS ", arguments);
 	if (arguments.length == 0) {
 		this.states.audioFile = null;
 		this.states.audioType = null;
 	} else if (arguments.length == 1) {
+console.log("SINGLE ARGUMENT", argumets[0]);
 		if (typeof arguments[0] === 'string') {
 			this.states.audioFile = arguments[0];
 		} else {
+console.log("GOT HERE");
 			this.states.audioFile = arguments[0].file;
 			this.states.audioType = arguments[0].type;
 		}
