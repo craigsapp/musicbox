@@ -176,6 +176,7 @@ MusicBox.prototype.getAudioType = function () {
 }
 
 MusicBox.prototype.setAudioFile = function () {
+	console.log("SET AUDIO FILE ARGUMENTS ", arguments);
 	if (arguments.length == 0) {
 		this.states.audioFile = null;
 		this.states.audioType = null;
