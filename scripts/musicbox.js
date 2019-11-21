@@ -1955,7 +1955,7 @@ MusicBox.prototype.activateTimemap = function (index, selector) {
 		this.setVideoFile();
 	}
 	if (this.timemaps[index].audio) {
-	this.setAudioFile(this.timemaps[index].audio);
+		this.setAudioFile(this.timemaps[index].audio, this.timemaps[index].type);
 	} else {
 		this.setAudioFile();
 	}
