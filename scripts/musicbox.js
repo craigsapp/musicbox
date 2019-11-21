@@ -1195,8 +1195,11 @@ MusicBox.prototype.createMediaInterface  = function (itype) {
 //
 
 MusicBox.prototype.createAudioInterface = function (id) {
-	var audio = document.createElement('AUDIO');
-	document.body.appendChild(audio);
+	var audio = document.querySelector("audio#" + id);
+	if (!audio) {
+		audio = document.createElement('AUDIO');
+		document.body.appendChild(audio);
+	}
 	var that = this;
 	audio.setAttribute('controls', 'controls');
 	audio.id              = id;
