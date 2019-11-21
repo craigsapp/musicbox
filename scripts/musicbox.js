@@ -1286,6 +1286,7 @@ MusicBox.prototype.createVideoInterface = function (id) {
 //
 
 MusicBox.prototype.playMedia = function (event) {
+console.log("PLAYING MEDIA");
 	this.states.playing = 1;
 	var iface = this.getActiveMediaElement();
 	this.states.lasttime = iface.currentTime;
@@ -1325,6 +1326,7 @@ MusicBox.prototype.playMedia = function (event) {
 //
 
 MusicBox.prototype.stopMedia = function (event) {
+console.log("STOPPING MEDIA");
 	this.states.playing = 0; // make timemap monitoring setInterval() exit
 	this.unhighlightRange(0, this.getActiveTimemap().length-1);
 }
