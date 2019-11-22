@@ -176,22 +176,27 @@ MusicBox.prototype.getAudioType = function () {
 }
 
 MusicBox.prototype.setAudioFile = function () {
-console.log("SET AUDIO FILE ARGUMENTS ", arguments);
 	if (arguments.length == 0) {
 		this.states.audioFile = null;
 		this.states.audioType = null;
 	} else if (arguments.length == 1) {
-console.log("SINGLE ARGUMENT", argumets[0]);
 		if (typeof arguments[0] === 'string') {
 			this.states.audioFile = arguments[0];
-		} else {
-console.log("GOT HERE");
+		} else if ((typeof arguments[0] === 'object') && (arguments[0] !== null)) {
 			this.states.audioFile = arguments[0].file;
 			this.states.audioType = arguments[0].type;
+		} else {
+			this.states.audioFile = null;
+			this.states.audioType = null;
 		}
 	} else if (arguments.length == 2) {
+		if ((typeof arguments[0] === 'object') && (arguments[0] !== null)) {
+			this.states.audioFile = arguments[0].file;
+			this.states.audioType = arguments[0].type;
+		} else {
 			this.states.audioFile = arguments[0];
 			this.states.audioType = arguments[1];
+		}
 	}
 }
 
