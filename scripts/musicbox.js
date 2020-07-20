@@ -1909,7 +1909,6 @@ MusicBox.prototype.getQstamps = function (selector) {
 		var onlist = notes;
 		var offlist = notes;
 		for (j=0; j<onlist.length; j++) {
-			console.log("ONLIST ITEM" , onlist[j]);
 			while ((result = reg.exec(onlist[j].className.baseVal)) !== null) {
 				tag = result[1].replace('d', '.');
 				qstamps[tag] = '1';
