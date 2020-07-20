@@ -1222,6 +1222,9 @@ MusicBox.prototype.createAudioInterface = function (id) {
 	var text = '<source src="' + this.getAudioFile();
 	text += '" type="' + that.getAudioType() + '"/>';
 	audio.innerHTML = text;
+	audio.load();
+	setTimeout(function(){console.log('loading audio src:', audio.currentSrc)});
+
 	this.setActiveMediaElement(audio);
 
 	// timemap is probably already loaded:
