@@ -1228,7 +1228,6 @@ MusicBox.prototype.createAudioInterface = function (id) {
 	if (!this.states.timemap) {
 		return;
 	}
-
 	var newstart = this.states.timemap[0].tstamp 
 			+ this.getAnticipationTime()/1000.0;
 	var iface = this.getActiveMediaElement();
@@ -1297,7 +1296,6 @@ MusicBox.prototype.createVideoInterface = function (id) {
 //
 
 MusicBox.prototype.playMedia = function (event) {
-console.log("PLAYING MEDIA");
 	this.states.playing = 1;
 	var iface = this.getActiveMediaElement();
 	this.states.lasttime = iface.currentTime;
@@ -1337,7 +1335,6 @@ console.log("PLAYING MEDIA");
 //
 
 MusicBox.prototype.stopMedia = function (event) {
-console.log("STOPPING MEDIA");
 	this.states.playing = 0; // make timemap monitoring setInterval() exit
 	this.unhighlightRange(0, this.getActiveTimemap().length-1);
 }
@@ -1359,7 +1356,7 @@ MusicBox.prototype.unhighlightRange = function (starti, endi) {
 	}
 	for (var i=starti; i<=endi; i++) {
 		var mytime = tm[i].qstamp.toString().replace(/\./, 'd');
-		var offclass = '.qoff-' + mytime;
+		var offclass = '.noteoff-' + mytime;
 		var offlist = document.querySelectorAll(offclass);
 		for (var j=0; j<offlist.length; j++) {
 			if (!offlist[j].getAttribute('class').match(/\bon\b/)) {
@@ -1398,7 +1395,7 @@ MusicBox.prototype.highlightRange = function (starti, endi) {
 	}
 	for (var i=starti; i<=endi; i++) {
 		var mytime = tm[i].qstamp.toString().replace(/\./, 'd');
-		var onclass = '.qon-' + mytime;
+		var onclass = '.noteon-' + mytime;
 		var onlist = document.querySelectorAll(onclass);
 		for (var j=0; j<onlist.length; j++) {
 			if (onlist[j].classList.contains('on')) {
@@ -1431,7 +1428,7 @@ MusicBox.prototype.highlightRange = function (starti, endi) {
 MusicBox.prototype.createTrillAnimation = function (element, starti) {
 	var tm = this.getActiveTimemap();
 	var ontime = tm[starti].tstamp;
-	var offq = element.getAttribute('class').match(/qoff-([\dd]+)/)[1];
+	var offq = element.getAttribute('class').match(/noteoff-([\dd]+)/)[1];
 	offq = offq.replace(/d/, '.');
 	var offtime = this.getTimeFromQI(starti, offq);
 	var duration = offtime - ontime + 0.0001;
@@ -1617,12 +1614,12 @@ MusicBox.prototype.addNoteControls = function () {
 	var images = document.querySelectorAll(this.getScoreSelector() + ' svg');
 	var that = this;
 	for (var i=0; i<images.length; i++) {
-		var notes = images[i].querySelectorAll('g[class^="qon-"]');
+		var notes = images[i].querySelectorAll('g[class^="noteon-"]');
 		for (var jj=0; jj<notes.length; jj++) {
-			if (!notes[jj].className.baseVal.match(/qon/)) {
+			if (!notes[jj].className.baseVal.match(/noteon/)) {
 				if (i==0) { console.log(notes[jj]); };
 			} else {
-				var number = notes[jj].className.baseVal.match(/qon-([^\s]+)/)[1];
+				var number = notes[jj].className.baseVal.match(/noteon-([^\s]+)/)[1];
 				notes[jj].onclick = function(event) {console.log("EVENT", event); that.playFromEvent(event);}
 			}
 		}
@@ -1644,7 +1641,7 @@ MusicBox.prototype.playFromEvent = function (event) {
 			break;
 		}
 		if (targ.getAttribute('class')) {
-		   var matches = targ.getAttribute('class').match('qon-([^\\s]+)');
+		   var matches = targ.getAttribute('class').match('noteon-([^\\s]+)');
 		} else {
 			matches = null;
 		}
@@ -1890,7 +1887,7 @@ MusicBox.prototype.getSvgElementList = function () {
 
 //////////////////////////////
 //
-// MusicBox.prototype.getQstamps -- Return all of the qon-* and qoff-*
+// MusicBox.prototype.getQstamps -- Return all of the noteon-* and noteoff-*
 //    elements in the score.
 //
 
@@ -1908,11 +1905,11 @@ MusicBox.prototype.getQstamps = function (selector) {
 	var result;
 	var reg = new RegExp(/noteo[nf]+-([d\d]+)/gi);
 	for (i=0; i<svgs.length; i++) {
-		var onselector  = 'g[class^="qon-"]';
-		var offselector = 'g[class^="qoff-"]';
-		var onlist = svgs[i].querySelectorAll(onselector);
-		var offlist = svgs[i].querySelectorAll(offselector);
+		var notes = svgs[i].querySelectorAll("g[id^='note-'");
+		var onlist = notes;
+		var offlist = notes;
 		for (j=0; j<onlist.length; j++) {
+			console.log("ONLIST ITEM" , onlist[j]);
 			while ((result = reg.exec(onlist[j].className.baseVal)) !== null) {
 				tag = result[1].replace('d', '.');
 				qstamps[tag] = '1';
@@ -1925,6 +1922,7 @@ MusicBox.prototype.getQstamps = function (selector) {
 			}
 		}
 	}
+
 
 	var output = [];
 	for (var p in qstamps) {
@@ -1974,7 +1972,6 @@ MusicBox.prototype.activateTimemap = function (index, selector) {
 	var basemap = this.timemaps[index].timemap;
 	var qstamps = this.getQstamps(selector);
 	qstamps = qstamps.sort(function(a,b){return a-b});
-console.log("===================== QSTAMPS", qstamps);
 
 	var nts = [];
 	var curi = 0;
@@ -1984,22 +1981,17 @@ console.log("===================== QSTAMPS", qstamps);
 	var pretarget;
 	var target;
 	var interp;
-console.log("BASEMAP", basemap);
 
 	// check if the inputs are correct:
 	//console.log('QSTAMPS', qstamps);
 	//console.log('TIMEMAP', basemap);
 	for (i=0; i<qstamps.length; i++) {
-console.log("CURI = ", curi);
 		if (curi >= basemap.length) {
 			console.log("Error: timemap is not the correct size");
 			console.log("Check to see if beat durations are correct");
 		}
 		if (qstamps[i] == basemap[curi].qstamp) {
-console.log(`   ADDING QSTAMP[${i}] =`, qstamps[i]);
-console.log(`   BASEMAP[${curi}]    =`, basemap[curi]);
 			nts.push(basemap[curi]);
-console.log("   NEW NTS", nts);
 			curi++;
 			continue;
 		}
@@ -2016,8 +2008,6 @@ console.log("   NEW NTS", nts);
 		// find next extant timestamp
 		target = basemap[curi];
 		pretarget = nts[nts.length-1];
-console.log("      PRETARGET SET TO", pretarget);
-console.log("      NTS SIZE", nts.length);
 		interp = this.getInterpolation(qstamps[i], pretarget, target);
 
 		// Check individual interpolation assignments:
@@ -2048,7 +2038,6 @@ console.log("      NTS SIZE", nts.length);
 //
 
 MusicBox.prototype.getInterpolation = function (qstamp, event1, event2) {
-console.log("QSTAMP", qstamp, "EVENT1", event1, "EVENT2", event2);
 	var t1 = event1.tstamp;
 	var t2 = event2.tstamp;
 	var q1 = event1.qstamp;
