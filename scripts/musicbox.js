@@ -1359,7 +1359,7 @@ MusicBox.prototype.unhighlightRange = function (starti, endi) {
 	}
 	for (var i=starti; i<=endi; i++) {
 		var mytime = tm[i].qstamp.toString().replace(/\./, 'd');
-		var offclass = '.noteoff-' + mytime;
+		var offclass = '.qoff-' + mytime;
 		var offlist = document.querySelectorAll(offclass);
 		for (var j=0; j<offlist.length; j++) {
 			if (!offlist[j].getAttribute('class').match(/\bon\b/)) {
@@ -1398,7 +1398,7 @@ MusicBox.prototype.highlightRange = function (starti, endi) {
 	}
 	for (var i=starti; i<=endi; i++) {
 		var mytime = tm[i].qstamp.toString().replace(/\./, 'd');
-		var onclass = '.noteon-' + mytime;
+		var onclass = '.qon-' + mytime;
 		var onlist = document.querySelectorAll(onclass);
 		for (var j=0; j<onlist.length; j++) {
 			if (onlist[j].classList.contains('on')) {
@@ -1431,7 +1431,7 @@ MusicBox.prototype.highlightRange = function (starti, endi) {
 MusicBox.prototype.createTrillAnimation = function (element, starti) {
 	var tm = this.getActiveTimemap();
 	var ontime = tm[starti].tstamp;
-	var offq = element.getAttribute('class').match(/noteoff-([\dd]+)/)[1];
+	var offq = element.getAttribute('class').match(/qoff-([\dd]+)/)[1];
 	offq = offq.replace(/d/, '.');
 	var offtime = this.getTimeFromQI(starti, offq);
 	var duration = offtime - ontime + 0.0001;
@@ -1617,12 +1617,12 @@ MusicBox.prototype.addNoteControls = function () {
 	var images = document.querySelectorAll(this.getScoreSelector() + ' svg');
 	var that = this;
 	for (var i=0; i<images.length; i++) {
-		var notes = images[i].querySelectorAll('g[class^="noteon-"]');
+		var notes = images[i].querySelectorAll('g[class^="qon-"]');
 		for (var jj=0; jj<notes.length; jj++) {
-			if (!notes[jj].className.baseVal.match(/noteon/)) {
+			if (!notes[jj].className.baseVal.match(/qon/)) {
 				if (i==0) { console.log(notes[jj]); };
 			} else {
-				var number = notes[jj].className.baseVal.match(/noteon-([^\s]+)/)[1];
+				var number = notes[jj].className.baseVal.match(/qon-([^\s]+)/)[1];
 				notes[jj].onclick = function(event) {console.log("EVENT", event); that.playFromEvent(event);}
 			}
 		}
@@ -1644,7 +1644,7 @@ MusicBox.prototype.playFromEvent = function (event) {
 			break;
 		}
 		if (targ.getAttribute('class')) {
-		   var matches = targ.getAttribute('class').match('noteon-([^\\s]+)');
+		   var matches = targ.getAttribute('class').match('qon-([^\\s]+)');
 		} else {
 			matches = null;
 		}
@@ -1890,7 +1890,7 @@ MusicBox.prototype.getSvgElementList = function () {
 
 //////////////////////////////
 //
-// MusicBox.prototype.getQstamps -- Return all of the noteon-* and noteoff-*
+// MusicBox.prototype.getQstamps -- Return all of the qon-* and qoff-*
 //    elements in the score.
 //
 
@@ -1908,8 +1908,8 @@ MusicBox.prototype.getQstamps = function (selector) {
 	var result;
 	var reg = new RegExp(/noteo[nf]+-([d\d]+)/gi);
 	for (i=0; i<svgs.length; i++) {
-		var onselector  = 'g[class^="noteon-"]';
-		var offselector = 'g[class^="noteoff-"]';
+		var onselector  = 'g[class^="qon-"]';
+		var offselector = 'g[class^="qoff-"]';
 		var onlist = svgs[i].querySelectorAll(onselector);
 		var offlist = svgs[i].querySelectorAll(offselector);
 		for (j=0; j<onlist.length; j++) {
