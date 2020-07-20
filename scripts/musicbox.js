@@ -1997,7 +1997,7 @@ console.log("CURI = ", curi);
 		}
 		if (qstamps[i] == basemap[curi].qstamp) {
 console.log(`   ADDING QSTAMP[${i}] =`, qstamps[i]);
-console.log(`   BASEMAP[${curi}]    =`, basemap[curi]
+console.log(`   BASEMAP[${curi}]    =`, basemap[curi]);
 			nts.push(basemap[curi]);
 console.log("   NEW NTS", nts);
 			curi++;
