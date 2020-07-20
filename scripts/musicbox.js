@@ -1974,7 +1974,7 @@ MusicBox.prototype.activateTimemap = function (index, selector) {
 	var basemap = this.timemaps[index].timemap;
 	var qstamps = this.getQstamps(selector);
 	qstamps = qstamps.sort(function(a,b){return a-b});
-console.log("QSTAMPS", qstamps);
+console.log("===================== QSTAMPS", qstamps);
 
 	var nts = [];
 	var curi = 0;
