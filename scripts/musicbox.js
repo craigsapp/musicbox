@@ -1974,6 +1974,7 @@ MusicBox.prototype.activateTimemap = function (index, selector) {
 	var basemap = this.timemaps[index].timemap;
 	var qstamps = this.getQstamps(selector);
 	qstamps = qstamps.sort(function(a,b){return a-b});
+console.log("QSTAMPS", qstamps);
 
 	var nts = [];
 	var curi = 0;
@@ -1983,17 +1984,22 @@ MusicBox.prototype.activateTimemap = function (index, selector) {
 	var pretarget;
 	var target;
 	var interp;
+console.log("BASEMAP", basemap);
 
 	// check if the inputs are correct:
 	//console.log('QSTAMPS', qstamps);
 	//console.log('TIMEMAP', basemap);
 	for (i=0; i<qstamps.length; i++) {
+console.log("CURI = ", curi);
 		if (curi >= basemap.length) {
 			console.log("Error: timemap is not the correct size");
 			console.log("Check to see if beat durations are correct");
 		}
 		if (qstamps[i] == basemap[curi].qstamp) {
+console.log(`   ADDING QSTAMP[${i}] =`, qstamps[i]);
+console.log(`   BASEMAP[${curi}]    =`, basemap[curi]
 			nts.push(basemap[curi]);
+console.log("   NEW NTS", nts);
 			curi++;
 			continue;
 		}
@@ -2010,6 +2016,8 @@ MusicBox.prototype.activateTimemap = function (index, selector) {
 		// find next extant timestamp
 		target = basemap[curi];
 		pretarget = nts[nts.length-1];
+console.log("      PRETARGET SET TO", pretarget);
+console.log("      NTS SIZE", nts.length);
 		interp = this.getInterpolation(qstamps[i], pretarget, target);
 
 		// Check individual interpolation assignments:
