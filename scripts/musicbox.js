@@ -2040,6 +2040,7 @@ MusicBox.prototype.activateTimemap = function (index, selector) {
 //
 
 MusicBox.prototype.getInterpolation = function (qstamp, event1, event2) {
+console.log("QSTAMP", qstamp, "EVENT1", event1, "EVENT2', event2);
 	var t1 = event1.tstamp;
 	var t2 = event2.tstamp;
 	var q1 = event1.qstamp;
